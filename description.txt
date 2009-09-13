@@ -1,0 +1,1 @@
+A multi-purpose image gallery plugin.

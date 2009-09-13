@@ -1,0 +1,72 @@
+div.mag {
+  border: 1px solid #eee;
+}
+
+div.mag a {
+  display: block;
+  border: 1px solid #fff;
+  -moz-outline-style: none;
+}
+
+div.mag img {
+  border: 0;
+  background: #000;
+}
+
+div.mag a.selected {
+  -moz-opacity: 0.5;
+  border: 1px solid #000;
+}
+
+div.mag a.main {
+  display: block;
+  /*border: 1px solid #000;*/
+}
+
+div.mag a:hover img {
+  -moz-opacity: 0.9;
+}
+
+#content div.mag img {
+  border: 0;
+  background: #000;
+  float: none;
+  margin: 0;
+}
+
+#content div.galleryimagebox {
+    float: left;
+}
+
+#content div.jgallery div.jg-large {
+	background: url(../images/ajax-loader.gif) center no-repeat ;
+	min-height: 200px;
+}
+
+#content div.jgallery div.jg-thumbnail-wrap {
+	overflow: auto;
+    margin-bottom: 10px;
+}
+
+#content div.jgallery div.jg-thumbnail-wrap ul {
+	margin: 0;
+}
+
+#content div.jgallery .jg-thumbnails {
+	float: left;
+	clear:both;
+}
+
+#content div.jgallery .jg-thumbnails li {
+	float: left;
+	margin: 0;
+	list-style: none;
+}
+
+#content div.jgallery .jg-thumbnails a {
+	display: block;
+}
+
+#content div.jgallery .jg-thumbnails img {
+	display: block;
+}

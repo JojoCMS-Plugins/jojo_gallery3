@@ -1,0 +1,28 @@
+div.mag {
+  border: 1px solid #eee;
+}
+
+div.mag a {
+  display: block;
+  border: 1px solid #fff;
+  -moz-outline-style: none;
+}
+
+div.mag img {
+  border: 0;
+  background: #000;
+}
+
+div.mag a.selected {
+  -moz-opacity: 0.5;
+  border: 1px solid #000;
+}
+
+div.mag a.main {
+  display: block;
+  /*border: 1px solid #000;*/
+}
+
+div.mag a:hover img {
+  -moz-opacity: 0.9;
+}
