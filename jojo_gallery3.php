@@ -388,7 +388,9 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 
     private static function imageidsort($a, $b)
     {
-        return strcmp($a['imageid'],$b['imageid']);
+        if(isset($a['imageid']) and isset($b['imageid'])) return strcmp($a['imageid'],$b['imageid']);
+        if(isset($a['imageid'])) return 1;
+        return -1;
     }
 
     public static function getAdminHtml($galleryid)
@@ -528,7 +530,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $query .= _MULTILANGUAGE ? " AND (`language` = '$language')" : '';
         $query .= $index ? " AND (`show` = 'index')" : '';
         $query .= " ORDER BY `displayorder`, $gallerysorting";
-        
+
         $galleries = Jojo::selectQuery($query);
 
         foreach ($galleries as &$g) {
