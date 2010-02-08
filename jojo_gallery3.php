@@ -540,7 +540,11 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $g['name']          = htmlspecialchars($g['name'], ENT_COMPAT, 'UTF-8', false);
             $g['baseurl']       = $g['url'];
             $g['url']           = self::getUrl($id, $g, $language, $categoryid);
-            $files              = self::getImages($id,0,$g['sortby']);
+            if (empty($g['sortby'])) {
+                $files              = self::getImages($id,0);
+            } else {
+                $files              = self::getImages($id,0,$g['sortby']);
+            }
             $g['image']         = !empty($files[0]['filename']) ? $files[0]['filename'] :'';
             $g['bodyplain']     = strip_tags($g['body']);
             $g['numimages']     = !empty($files[0]) ? count($files) : 0;
