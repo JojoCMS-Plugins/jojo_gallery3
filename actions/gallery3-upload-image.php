@@ -33,7 +33,7 @@ $frajax = new frajax();
 $frajax->title = 'Upload Image - ' . _SITETITLE;
 $frajax->sendHeader();
 
-$galleryid = Jojo::getFormData('fm_gallery3id', '');
+$galleryid = Jojo::getFormData('id', '');
 if (empty($galleryid)) {
     $frajax->alert('an error occured uploading this file');
     exit();
