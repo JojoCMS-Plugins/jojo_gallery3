@@ -141,7 +141,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 
      public static function customhead()
     {
-        return '<script type="text/javascript" src="external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n".'<link rel="stylesheet" type="text/css" href="external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />';
+        return '<script type="text/javascript" src="'._PROTOCOL.$_SERVER['HTTP_HOST'].'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n".'<link rel="stylesheet" type="text/css" href="'._PROTOCOL.$_SERVER['HTTP_HOST'].'/external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />';
     }
 
     public function _getContent()
@@ -355,7 +355,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                Jojo::deleteQuery("DELETE FROM {gallery3_image} WHERE `filename` = ? AND `gallery3id` = ? LIMIT 1", array($file, $galleryid));
            }
         } else {
-            $files = Jojo::selectAssoc("SELECT `filename` as `key`, `filename` as filename, gi_date as datetime, gi_name as name, gi.* FROM {gallery3_image} as gi WHERE `gallery3id` = ? order by $order", $galleryid);
+            $files = Jojo::selectQuery("SELECT `filename` as `key`, `filename` as filename, gi_date as datetime, gi_name as name, gi.* FROM {gallery3_image} as gi WHERE `gallery3id` = ? order by $order", $galleryid);
             foreach($files as $key => &$filename) {
                     $filename['caption'] = htmlspecialchars($filename['caption'],ENT_COMPAT,'UTF-8',false);
              }
