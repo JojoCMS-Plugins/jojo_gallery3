@@ -659,7 +659,7 @@ echo 't = '.($w1+$w2+$w3).'<br>';
         if (!$main && $url == $this->images[$this->selected]['url']) $classes[] = 'selected';
         $class = count($classes) ? ' class="'.implode(' ',$classes).'"' : '';
 
-        return '<a href="'.$this->prefix.$url.'"'.$class.$style.'>' . $this->insertImage($url, $width, $height, $main) . '</a>'."\n";
+        return '<a href="'.$this->prefix.$url.'"'.$class.$style.' rel="lightbox">' . $this->insertImage($url, $width, $height, $main) . '</a>'."\n";
     }
 
     /* Replaces variables into the supplied image template */
