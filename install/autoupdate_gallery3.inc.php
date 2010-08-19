@@ -42,6 +42,18 @@ $default_fd['gallery3']['gallery3id'] = array(
         'fd_tabname' => "Content",
     );
 
+// Category Field
+$default_fd['gallery3']['category'] = array(
+        'fd_name' => "Page",
+        'fd_type' => "dblist",
+        'fd_options' => "gallerycategory",
+        'fd_default' => "0",
+        'fd_size' => "20",
+        'fd_help' => "The page on the site the Gallery belongs to",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
 // Name Field
 $default_fd['gallery3']['name'] = array(
         'fd_name' => "Name",
@@ -83,32 +95,17 @@ $default_fd['gallery3']['body'] = array(
 $default_fd['gallery3']['url'] = array(
         'fd_name' => "URL",
         'fd_type' => "internalurl",
-        'fd_options' => "colour-ranges",
         'fd_size' => "30",
         'fd_order' => $o++,
         'fd_tabname' => "Content",
     );
-
-// URL Field
-$default_fd['gallery3']['url'] = array(
-        'fd_name' => "URL",
-        'fd_type' => "internalurl",
-        'fd_size' => "30",
-        'fd_order' => $o++,
-        'fd_tabname' => "Content",
-    );
-foreach (Jojo::listPlugins('jojo_gallery3.php') as $pluginfile) {
-    require_once($pluginfile);
-    $default_fd['gallery3']['url']['fd_options'] = Jojo_Plugin_Jojo_gallery3::_getPrefix();
-    break;
-}
 
 //Timestamp
 $default_fd['gallery3']['g_date'] = array(
         'fd_order' => $o++,
         'fd_required' => 'no',
         'fd_type' => "unixdate",
-        'fd_default' => 'NOW()',
+        'fd_default' => 'now',
         'fd_help' => '',
         'fd_tabname' => "Content",
     );
@@ -127,7 +124,7 @@ $default_fd['gallery3']['layout'] = array(
 // Layout Field
 $default_fd['gallery3']['show'] = array(
         'fd_name' => "Show In",
-        'fd_type' => "radio",
+        'fd_type' => "hidden",
         'fd_options' => "index\nfilter",
         'fd_default' => 'index',
         'fd_help' => "Show this gallery in the index or make it only show when called by a filter (can still be called by filter if index is selected)",
@@ -165,6 +162,16 @@ $default_fd['gallery3']['previewsize'] = array(
         'fd_units' => "pixels",
     );
 
+// Index Image Field
+$default_fd['gallery3']['indeximage'] = array(
+        'fd_name' => "Index Image",
+        'fd_type' => "fileupload",
+        'fd_help' => "A separate image for the index, if  available",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+        'fd_mode' => "standard",
+    );
+
 // Sortby Field
 $default_fd['gallery3']['sortby'] = array(
         'fd_name' => "Sort Images by",
@@ -183,18 +190,6 @@ $default_fd['gallery3']['metadescription'] = array(
         'fd_rows' => "3",
         'fd_cols' => "60",
         'fd_help' => "A good sales oriented description of the page for the Search Engine snippet. Try to keep this within 155 characters, as anything larger will be chopped from the snippet.",
-        'fd_order' => $o++,
-        'fd_tabname' => "Content",
-    );
-
-// Category Field
-$default_fd['gallery3']['category'] = array(
-        'fd_name' => "Category",
-        'fd_type' => "dblist",
-        'fd_options' => "gallerycategory",
-        'fd_default' => "0",
-        'fd_size' => "20",
-        'fd_help' => "If applicable, the category the Gallery belongs to (for multiple gallery instances in one install)",
         'fd_order' => $o++,
         'fd_tabname' => "Content",
     );
@@ -328,11 +323,22 @@ $default_fd['gallery3_image']['credit'] = array(
         'fd_tabname' => "Content",
     );
 
+// Weighted Index Field
+$default_fd['gallery3_image']['keyimage'] = array(
+        'fd_name' => "Key Image",
+        'fd_type' => "yesno",
+        'fd_readonly' => "0",
+        'fd_default' => "0",
+        'fd_help' => "Use this image on the index page (if not overridden by Index Image)",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
 // Date Field
 $default_fd['gallery3_image']['gi_date'] = array(
         'fd_name' => "Date",
-        'fd_type' => "date",
-        'fd_default' => "NOW()",
+        'fd_type' => "unixdate",
+        'fd_default' => "now",
         'fd_help' => "Date the photo was taken (defaults to Today)",
         'fd_order' => $o++,
         'fd_tabname' => "Content",
@@ -354,7 +360,7 @@ $table = 'gallerycategory';
 $default_td[$table] = array(
         'td_name' => $table,
         'td_primarykey' => "gallerycategoryid",
-        'td_displayfield' => 'gc_url',
+        'td_displayfield' => 'pageid',
         'td_categorytable' => "",
         'td_categoryfield' => "",
         'td_filter' => "yes",
@@ -363,24 +369,39 @@ $default_td[$table] = array(
         'td_menutype' => "list",
         'td_help' => "Gallery categories are managed from here.",
         'td_defaultpermissions' => "everyone.show=1\neveryone.view=1\neveryone.edit=1\neveryone.add=1\neveryone.delete=1\nadmin.show=1\nadmin.view=1\nadmin.edit=1\nadmin.add=1\nadmin.delete=1\nnotloggedin.show=1\nnotloggedin.view=1\nnotloggedin.edit=1\nnotloggedin.add=1\nnotloggedin.delete=1\nregistered.show=1\nregistered.view=1\nregistered.edit=1\nregistered.add=1\nregistered.delete=1\nsysinstall.show=1\nsysinstall.view=1\nsysinstall.edit=1\nsysinstall.add=1\nsysinstall.delete=1\n",
+        'td_plugin' => "Jojo_gallery3",
     );
 
 /* Content Tab */
 $o = 0;
 
-// Gallery3_imageid Field
+// Cat Id
 $default_fd[$table]['gallerycategoryid'] = array(
         'fd_name' => "ID",
-        'fd_type' => "readonly",
+        'fd_type' => "integer",
+        'fd_readonly' => "1",
         'fd_help' => "A unique ID, automatically assigned by the system",
         'fd_order' => $o++,
         'fd_tabname' => "Content",
     );
 
+// Page Field
+$default_fd[$table]['pageid'] = array(
+        'fd_name' => "Page",
+        'fd_type' => "dbpluginpagelist",
+        'fd_options' => "jojo_plugin_jojo_gallery3",
+        'fd_readonly' => "1",
+        'fd_default' => "0",
+        'fd_help' => "The page on the site used for this category.",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
+
 // Name Field
 $default_fd[$table]['gc_url'] = array(
         'fd_name' => "Category URL",
-        'fd_type' => "text",
+        'fd_type' => "hidden",
         'fd_size' => "50",
         'fd_order' => $o++,
         'fd_tabname' => "Content",

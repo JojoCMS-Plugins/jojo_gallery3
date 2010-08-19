@@ -39,7 +39,7 @@ class Jojo_Field_gallery3Image extends Jojo_Field
         $recordid = $this->table->getFieldValue('gallery3_imageid');
         $galleryid = $this->table->getFieldValue('gallery3id');
         $oldgalleryid = Jojo::selectRow("SELECT `gallery3id` FROM {gallery3_image} WHERE `gallery3_imageid` = ?", array($recordid));
-        $oldgalleryid = $oldgalleryid['gallery3id'];
+        $oldgalleryid = isset($oldgalleryid['gallery3id']) ? $oldgalleryid['gallery3id'] : '';
 
         if (($this->fd_required == 'yes') && ($this->isblank())) {
             $this->error = 'Required field';
@@ -57,7 +57,7 @@ class Jojo_Field_gallery3Image extends Jojo_Field
         $galleryid = $this->table->getFieldValue('gallery3id');
 
         $retval = '';
-        $readonly = ($this->readonly == 'yes') ? ' readonly="readonly"' : '';
+        $readonly = ($this->fd_readonly) ? ' readonly="readonly"' : '';
         $suffix = ( ($this->index == '0') || ($this->index != '') ) ? '_' . $this->index : '';
         if (!$this->isblank()) {
             /* Make sure the file exists */
@@ -241,6 +241,7 @@ class Jojo_Field_gallery3Image extends Jojo_Field
 
                 /* Ensure file does not already exist on server, rename if it does */
                 $i=1;
+                $newname ='';
                 while (file_exists($destination)){
                     $i++;
                     $newname = $i."_".$filename;

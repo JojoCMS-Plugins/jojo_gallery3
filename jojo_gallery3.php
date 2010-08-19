@@ -19,147 +19,145 @@
 class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 {
 
-    public static function isUrl($uri)
-    {
-        $prefix = false;
-        $getvars = array();
-        /* Check the suffix matches and extra the prefix */
-        if (preg_match('#^(.+)/([0-9]+)/([a-z0-9-_]+)$#', $uri, $matches)) {
-            /* "$prefix/[id:integer]/[string]" eg "section/123/name-of-item/" */
-            $prefix = $matches[1];
-            $getvars = array(
-                        'id' => $matches[2]
-                        );
-        } elseif (preg_match('#^(.+)/([0-9]+)$#', $uri, $matches)) {
-            /* "$prefix/[id:integer]" eg "section/123/" */
-            $prefix = $matches[1];
-            $getvars = array(
-                        'id' => $matches[2]
-                        );
-        } elseif (preg_match('#^(.+)/([a-z0-9-_]+)$#', $uri, $matches)) {
-            /* "$prefix/[url:(string)]" eg "section/name-of-item/" */
-            $prefix = $matches[1];
-            $getvars = array(
-                        'url' => $matches[2]
-                        );
-        } else {
-            /* Didn't match */
-            return false;
-        }
-        /* Check the prefix matches */
-        if (self::checkPrefix($prefix)) {
-            /* The prefix is good, pass through uri parts */
-            foreach($getvars as $k => $v) {
-                $_GET[$k] = $v;
-            }
-            return true;
-        }
-        return false;
+    public static function getGalleries($categoryid=false, $language=false, $sortby='g_date desc') {
+        $gallerysorting = (Jojo::getOption('gallery_orderby', 'name') == 'date') ? 'g_date DESC, name' : 'name';
+        $query  = "SELECT i.*, c.*, p.pageid, pg_menutitle, pg_title, pg_url, pg_status, pg_language, pg_livedate, pg_expirydate";
+        $query .= " FROM {gallery3} i";
+        $query .= " LEFT JOIN {gallerycategory} c ON (i.category=c.gallerycategoryid) LEFT JOIN {page} p ON (c.pageid=p.pageid)";
+        $query .= $categoryid && $categoryid != 'all' ? " AND category = '$categoryid'" : ' AND category != 0';
+        $query .= $categoryid == 'all' && $language && $language != 'alllanguages' ? " AND (`language` = '$language')" : '';
+        $galleries = Jojo::selectQuery($query);
+        $galleries = self::cleanItems($galleries);
+        $galleries =  self::sortItems($galleries, $sortby);
+        return $galleries;
     }
 
-    /**
-     * Check if url prefix belongs to this plugin
-     */
-    public static function checkPrefix($prefix)
-    {
-        /* Cache some stuff */
-        static $_prefixes, $languages, $categories;
-        if (!isset($languages)) {
-            /* Initialise cache */
-            if (Jojo::tableExists('lang_country')) {
-                $languages = Jojo::selectAssoc("SELECT lc_code, lc_code as lc_code2 FROM {lang_country}");
+    static function getItemsById($ids = false, $sortby='g_date desc') {
+        $query  = "SELECT i.*, c.*, p.pageid, pg_menutitle, pg_title, pg_url, pg_status, pg_language, pg_livedate, pg_expirydate";
+        $query .= " FROM {gallery3} i";
+        $query .= " LEFT JOIN {gallerycategory} c ON (i.category=c.gallerycategoryid) LEFT JOIN {page} p ON (c.pageid=p.pageid)";
+        $query .=  is_array($ids) ? " WHERE gallery3id IN ('". implode("',' ", $ids) . "')" : " WHERE gallery3id=$ids";
+        $items = Jojo::selectQuery($query);
+        $items = self::cleanItems($items);
+        $items = is_array($ids) ? self::sortItems($items, $sortby) : $items[0];
+        return $items;
+    }
+
+    /* clean items for output */
+    static function cleanItems($items, $exclude=false, $include=false) {
+        $now    = time();
+        foreach ($items as $k=>&$i){
+            $pagedata = Jojo_Plugin_Core::cleanItems(array($i), $include);
+            if (!$pagedata) {
+                unset($items[$k]);
+                continue;
+            }
+            $i['pagetitle'] = $pagedata[0]['title'];
+            $i['pageurl']   = $pagedata[0]['url'];
+            $i['id']           = $i['gallery3id'];
+            $i['title']        = htmlspecialchars($i['name'], ENT_COMPAT, 'UTF-8', false);
+            // Snip for the index description
+            $i['bodyplain'] = array_shift(Jojo::iExplode('[[snip]]', $i['body']));
+            /* Strip all tags and template include code ie [[ ]] */
+            $i['bodyplain'] = preg_replace('/\[\[.*?\]\]/', '',  trim(strip_tags($i['bodyplain'])));
+            $i['date']       = $i['g_date'];
+            $i['datefriendly'] = Jojo::formatTimestamp($i['g_date'], "medium");
+            $i['files'] = array();
+            if (empty($i['sortby'])) {
+                $i['files'] = self::getImages($i['id'], 0);
             } else {
-                $languages = Jojo::selectAssoc("SELECT languageid, languageid as languageid2 FROM {language} WHERE active = 'yes'");
+                $i['files'] = self::getImages($i['id'], 0, $i['sortby']);
             }
-            $categories = array(false);
-            if (Jojo::getOption('gallery_enable_categories', 'no') == 'yes') {
-                $categories = array_merge($categories, Jojo::selectAssoc("SELECT gallerycategoryid, gallerycategoryid as gallerycategoryid2 FROM {gallerycategory}"));
+            $i['keyimages'] = array();
+            if (isset($i['indeximage']) && !empty($i['indeximage']) ) {
+                $i['keyimages'][] =  'gallery3s/' . $i['indeximage'];
             }
-            $_prefixes = array();
-        }
-
-        /* Check if it's in the cache */
-        if (isset($_prefixes[$prefix])) {
-            return $_prefixes[$prefix];
-        }
-
-        /* Check everything */
-        foreach ($languages as $language) {
-            $language = $language ? $language : Jojo::getOption('multilanguage-default', 'en');
-            foreach($categories as $category) {
-                $testPrefix = Jojo_Plugin_Jojo_gallery3::_getPrefix($language, $category);
-                $_prefixes[$testPrefix] = true;
-                if ($testPrefix == $prefix) {
-                    /* The prefix is good */
-                    return true;
+            if (count($i['files']) && isset($i['files'][0]['keyimage'])) {
+                foreach ($i['files'] as $f) {
+                    if ($f['keyimage']) {
+                        $i['keyimages'][] =  'gallery3/' .  $i['id'] . '/' . $f['filename'];
+                    }
                 }
             }
+            $i['image'] = count($i['keyimages']) ? $i['keyimages'][0] : (count($i['files']) ? 'gallery3/' .  $i['id'] . '/' . $i['files'][0]['filename'] :'');
+            $i['numimages']     = isset($i['files']) ? count($i['files']) : 0;
+            $i['baseurl']          = $i['url'];
+            $i['url']          = self::getUrl($i['id'], $i['url'], $i['title'], $i['language'], $i['category']);
+            $i['plugin']     = 'jojo_gallery3';
+            unset($items[$k]['bodycode']);
         }
-
-        /* Didn't match */
-        $_prefixes[$testPrefix] = false;
-        return false;
+        return $items;
     }
 
-     public static function saveTags($record, $tags = array())
-    {
-        /* Ensure the tags class is available */
-        if (!class_exists('Jojo_Plugin_Jojo_Tags')) {
-
-            /* Delete existing tags for this item */
-            Jojo_Plugin_Jojo_Tags::deleteTags('jojo_gallery3', $record['gallery3id']);
-
-            /* Save all the new tags */
-            foreach($tags as $tag) {
-                Jojo_Plugin_Jojo_Tags::saveTag($tag, 'jojo_gallery3', $record['gallery3id']);
+    /* sort items for output */
+    static function sortItems($items, $sortby=false) {
+        if ($sortby) {
+            $order = "date";
+            $reverse = false;
+            switch ($sortby) {
+              case "g_date desc":
+                $order="date";
+                $reverse = true;
+                break;
+              case "ar_title asc":
+                $order="name";
+                break;
+              case "order":
+                $order="order";
+                break;
             }
+            usort($items, array('Jojo_Plugin_Jojo_gallery3', $order . 'sort'));
+            $items = $reverse ? array_reverse($items) : $items;
+        }
+        return $items;
+    }
+
+    private static function namesort($a, $b) {
+         if (isset($a['name'])) {
+            return strcmp($a['name'],$b['name']);
+        } else {
+            return strcmp($a['filename'],$b['filename']);
         }
     }
 
-     public static function getTagSnippets($ids)
-    {
-        /* Convert array of ids to a string */
-        $ids = "'" . implode($ids, "', '") . "'";
-
-        /* Get the galleries */
-        $galleries = Jojo::selectQuery("SELECT * FROM {gallery3} WHERE gallery3id IN ($ids) ORDER BY displayorder, name");
-
-        /* Create the snippets */
-        $snippets = array();
-        foreach ($galleries as $i => $g){
-            $snippets[] = array(
-                    'id'    => $g['gallery3id'],
-                    'title' => htmlspecialchars($g['name'], ENT_COMPAT, 'UTF-8', false),
-                    'text'  => strip_tags($g['body']),
-                    'url'   => Jojo::urlPrefix(false) . self::getUrl($g['gallery3id'], $g, $g['language'], $g['category'])
-                );
+    private static function datesort($a, $b) {
+         if (isset($a['datetime'])) {
+            return strnatcasecmp($a['datetime'],$b['datetime']);
+        } else {
+            return strnatcasecmp($a['g_date'],$b['g_date']);
         }
-
-        /* Return the snippets */
-        return $snippets;
     }
 
-     public static function customhead()
-    {
-        return '<script type="text/javascript" src="'._PROTOCOL.$_SERVER['HTTP_HOST'].'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n".'<link rel="stylesheet" type="text/css" href="'._PROTOCOL.$_SERVER['HTTP_HOST'].'/external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />';
+    private static function imageidsort($a, $b) {
+        if(isset($a['imageid']) and isset($b['imageid'])) return strcmp($a['imageid'],$b['imageid']);
+        if(isset($a['imageid'])) return 1;
+        return -1;
     }
 
-    public function _getContent()
-    {
-        global $smarty, $_USERGROUPS, $_USERID;
+    private static function ordersort($a, $b) {
+         if (isset($a['gi_order'])) {
+            return strnatcasecmp($a['gi_order'],$b['gi_order']);
+        } else {
+            return strnatcasecmp($a['displayorder'],$b['displayorder']);
+        }
+    }
+
+    public function _getContent() {
+        global $smarty;
         $content = array();
+        
+        if (_MULTILANGUAGE) {
+            $language = !empty($this->page['pg_language']) ? $this->page['pg_language'] : Jojo::getOption('multilanguage-default', 'en');
+            $multilangstring = Jojo::getMultiLanguageString($language, false);
+            $smarty->assign('multilangstring', $multilangstring);
+        }
+        $id = Jojo::getFormData('id',        0);
+        $url       = Jojo::getFormData('url',      '');
+        $pageid = $this->page['pageid'];
+        $categorydata =  Jojo::selectRow("SELECT * FROM {gallerycategory} WHERE `pageid` = ?", array($pageid));
+        $categoryid = isset($categorydata['gallerycategoryid']) ? $categorydata['gallerycategoryid'] : '';
 
-        $language = !empty($this->page['pg_language']) ? $this->page['pg_language'] : Jojo::getOption('multilanguage-default', 'en');
-        $mldata = Jojo::getMultiLanguageData();
-        $lclanguage = $mldata['longcodes'][$language];
-
-        $_CATEGORIES = (Jojo::getOption('gallery_enable_categories', 'no') == 'yes') ? true : false ;
-        $categorydata =  ($_CATEGORIES) ? Jojo::selectRow("SELECT `gallerycategoryid` FROM {gallerycategory} WHERE `gc_url` = ?", array($this->page['pg_url'])) : '';
-        $categoryid = ($_CATEGORIES && isset($categorydata['gallerycategoryid']) ) ? $categorydata['gallerycategoryid'] : '';
-
-        $id  = Jojo::getFormData('id',  0);
-        $url = Jojo::getFormData('url', false);
-        $galleries = self::getGalleries($categoryid, $language, $index=true);
+        $galleries = self::getGalleries($categoryid, $language);
 
         /* if there is only one gallery and singlepage option is set, display the gallery data instead */
         $single = false;
@@ -168,7 +166,6 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                 $id = $galleries[0]['gallery3id'];
                 $smarty->assign('single', $single);
         }
-
         /* use the URL to find the ID */
         if (!empty($url) && empty($id)) {
             foreach ($galleries as $k => $g ) {
@@ -177,7 +174,6 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                 }
             }
         }
-
         if (!empty($id)) {
             foreach ($galleries as $k => $g ) {
                 if ($g['gallery3id'] == $id) {
@@ -185,25 +181,20 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                     $currentkey = $k;
                 }
             }
-
             /* get gallery data */
             if (!isset($currentkey)) {
                 $content['content'] = 'Unable to find this gallery.';
                 return $content;
             }
-
            /* calculate the next and previous galleries */
             if (Jojo::getOption('gallery_next_prev') == 'yes') {
                 $nextkey = $currentkey + 1;
-
                 if (isset($galleries[$nextkey])) {
-                      $nextgallery = array('id'=>$galleries[$nextkey]['gallery3id'], 'title'=>$galleries[$nextkey]['name'], 'url'=>$galleries[$nextkey]['url']);
-                      $smarty->assign('nextgallery', $nextgallery);
+                      $smarty->assign('nextgallery', $galleries[$nextkey]);
                 }
                 $prevkey = $currentkey - 1;
                 if (isset($galleries[$prevkey])) {
-                      $prevgallery = array('id'=>$galleries[$prevkey]['gallery3id'], 'title'=>$galleries[$prevkey]['name'], 'url'=>$galleries[$prevkey]['url']);
-                      $smarty->assign('prevgallery', $prevgallery);
+                      $smarty->assign('prevgallery', $galleries[$prevkey]);
                 }
              }
 
@@ -222,49 +213,31 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             if (!$single) {
                 /* Add breadcrumb */
                 $breadcrumb = array();
-                $breadcrumb['name']               = $gallery['name'];
-                $breadcrumb['rollover']           = $gallery['name'];
+                $breadcrumb['name']               = $gallery['title'];
+                $breadcrumb['rollover']           = $gallery['title'];
                 $breadcrumb['url']                = $gallery['url'];
                 $breadcrumbs[count($breadcrumbs)] = $breadcrumb;
             }
 
             /* Get the HTML */
-            $galleryhtml = self::getGalleryHtml($id);
-
             $smarty->assign('gallery', $gallery);
-            $smarty->assign('galleryhtml', $galleryhtml);
-            // The language of the page is generated in the template.
-            // Need to generate the language prefix here so we have more control over
-            // whether the language prefix is displayed or not.
-            // Part of SEO friendly internationalisation.
-            if (_MULTILANGUAGE) {
-                $pg_lang_prefix = Jojo::getMultiLanguageString( $language, false );
-                if ($pg_lang_prefix == '' ) {
-                    $pg_lang_prefix = 'null';
-                }
-            } else {
-                $pg_lang_prefix = 'null'; // make sure that pg_lang_prefix has a value to check against so that we don't break existing functionality for a site that has not been upgraded yet.
-            }
-            $smarty->assign('pg_lang_prefix', $pg_lang_prefix);
+            $smarty->assign('galleryhtml', self::getGalleryHtml($id, $gallery));
+
             $content['content']         = $smarty->fetch('jojo_gallery3_detail.tpl');
             $content['breadcrumbs']     = $breadcrumbs;
-            $content['title']           = $gallery['name'];
-            $content['seotitle']        = Jojo::either($gallery['seotitle'], $gallery['name']);
+            $content['title']           = $gallery['title'];
+            $content['seotitle']        = Jojo::either($gallery['seotitle'], $gallery['title']);
             $content['metadescription'] = $gallery['metadescription'];
 
         } else {
-
             $smarty->assign('galleries', $galleries);
             $content['content'] = $smarty->fetch('jojo_gallery3_index.tpl');
         }
-
         return $content;
     }
 
-
-    public static function _getPrefix($language=false, $categoryid=false) {
+    static function _getPrefix($categoryid=false) {
         $cacheKey = 'gallery3';
-        $cacheKey .= ($language) ? $language : 'false';
         $cacheKey .= ($categoryid) ? $categoryid : 'false';
 
         /* Have we got a cached result? */
@@ -273,27 +246,84 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             return $_cache[$cacheKey];
         }
 
-        $language = !empty($language) ? $language : Jojo::getOption('multilanguage-default', 'en');
-        $_CATEGORIES = (Jojo::getOption('gallery_enable_categories', 'no') == 'yes') ? true : false ;
-        $categorydata =  ($_CATEGORIES && !empty($categoryid)) ? Jojo::selectRow("SELECT `gc_url` FROM {gallerycategory} WHERE `gallerycategoryid` = '$categoryid';") : '';
-        $category = ($_CATEGORIES && !empty($categoryid)) ? $categorydata['gc_url'] : '';
-
-        $query = "SELECT pageid, pg_title, pg_url FROM {page} WHERE pg_link = ?";
-        $query .= (_MULTILANGUAGE) ? " AND pg_language = '$language'" : '';
-        $query .= (!empty($category)) ? " AND pg_url LIKE '%$category'": '';
-
-        $res = Jojo::selectRow($query, array('Jojo_Plugin_Jojo_gallery3'));
+        /* Cache some stuff */
+        $res = Jojo::selectRow("SELECT p.pageid, pg_title, pg_url FROM {page} p LEFT JOIN {gallerycategory} c ON (c.pageid=p.pageid) WHERE `gallerycategoryid` = '$categoryid'");
         if ($res) {
-            $_cache[$cacheKey] = !empty($res['pg_url']) ? $res['pg_url'] : $res['pageid'] . '/' . strtolower($res['pg_title']);
+            $_cache[$cacheKey] = !empty($res['pg_url']) ? $res['pg_url'] : $res['pageid'] . '/' . Jojo::cleanURL($res['pg_title']);
         } else {
             $_cache[$cacheKey] = '';
         }
-
         return $_cache[$cacheKey];
     }
 
-    public static function getImages($galleryid, $refresh=false, $sort="imageid")
-    {
+    static function getPrefixById($id=false) {
+        if ($id) {
+            $data = Jojo::selectRow("SELECT category FROM {gallery3} WHERE gallery3id = ?", array($id));
+            if ($data) {
+                $prefix = self::_getPrefix($data['category']);
+                return $prefix;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if url prefix belongs to this plugin
+     */
+    static public function checkPrefix($prefix) {
+        static $_prefixes, $categories;
+        if (!isset($categories)) {
+            /* Initialise cache */
+            $categories = array(false);
+            $categories = array_merge($categories, Jojo::selectAssoc("SELECT gallerycategoryid, gallerycategoryid as gallerycategoryid2 FROM {gallerycategory}"));
+            $_prefixes = array();
+        }
+        /* Check if it's in the cache */
+        if (isset($_prefixes[$prefix])) {
+            return $_prefixes[$prefix];
+        }
+        /* Check everything */
+        foreach($categories as $category) {
+            $testPrefix = self::_getPrefix($category);
+            $_prefixes[$testPrefix] = true;
+            if ($testPrefix == $prefix) {
+                /* The prefix is good */
+                return true;
+            }
+        }
+        /* Didn't match */
+        $_prefixes[$testPrefix] = false;
+        return false;
+    }
+
+    public static function isUrl($uri) {
+        $prefix = false;
+        $getvars = array();
+        /* Check the suffix matches and extract the prefix */
+        if ($uribits = Jojo_Plugin::isPluginUrl($uri)) {
+            $prefix = $uribits['prefix'];
+            $getvars = $uribits['getvars'];
+        } else {
+            return false;
+        }
+        /* Check the prefix matches */
+        if ($res = self::checkPrefix($prefix)) {
+            /* If full uri matches a prefix it's an index page so ignore it and let the page plugin handle it */
+            if (self::checkPrefix(trim($uri, '/'))) return false;
+            /* The prefix is good, pass through uri parts */
+            foreach($getvars as $k => $v) {
+                $_GET[$k] = $v;
+            }
+            return true;
+        }
+        return false;
+    }
+
+     public static function customhead() {
+        return '<script type="text/javascript" src="'._PROTOCOL.$_SERVER['HTTP_HOST'].'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n".'<link rel="stylesheet" type="text/css" href="'._PROTOCOL.$_SERVER['HTTP_HOST'].'/external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />';
+    }
+
+    public static function getImages($galleryid, $refresh=false, $sort="imageid") {
         if (empty($galleryid)) {
             return array();
         }
@@ -315,7 +345,6 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $order="gi_order";
         }
 
-
         if (Jojo::ctrlF5() || $refresh) {
             $files = Jojo_Plugin_Jojo_gallery3::scandir(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/');
             if (empty($files)) {
@@ -323,27 +352,38 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             }
 
             /* check list of files in the gallery directory against the database records */
-            $dbrows = Jojo::selectAssoc("SELECT `filename`, gi_date as datetime, gi_name as name, gi.* FROM {gallery3_image} as gi WHERE `gallery3id` = ? order by $order", $galleryid);
+            $dbrows = Jojo::selectAssoc("SELECT `filename`, gi_date as datetime, gi_name as name, gi.*, g.sortby FROM {gallery3_image} as gi LEFT JOIN {gallery3} g ON (g.gallery3id=gi.gallery3id ) WHERE gi.gallery3id = ? order by $order", $galleryid);
 
             foreach($files as $key => $filename) {
                 /* Image in the directory - but no record in the database */
                 if (!isset($dbrows[$filename])) {
-                    /* Insert into the database if there's no record for this image (anywhere) */
-                    Jojo::insertQuery("INSERT INTO {gallery3_image} SET `filename` = ?, `gallery3id` = ? ", array($filename, $galleryid));
+                    $exif = exif_read_data(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename);
+                    $timestamp = time();
+                    if (isset($exif['DateTime'])) {
+                        $datetime = explode(' ', $exif['DateTime']);
+                        $date = explode(':', $datetime[0]);
+                        $time = explode(':', $datetime[1]);
+                        $timestamp = mktime($time[0], $time[1], $time[2], $date[1], $date[2], $date[0]);
+                    }
+                    $id = Jojo::insertQuery("INSERT INTO {gallery3_image} SET `filename` = ?, `gallery3id` = ?, `gi_date` = ? ", array($filename, $galleryid, $timestamp));
                     $files[$key] = array(
                                     'filename'   => $filename,
                                     'gallery3id' => $galleryid,
-                                    'datetime'     => ''
+                                    'imageid' => $id,
+                                    'date'           => Jojo::formatTimestamp($timestamp, "medium"),
+                                    'datetime'     => $timestamp
                                    );
-               } else {
+                } else {
                     /* Image in the directory and in the database - return the record */
                     $fileloc = _DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename;
                     $files[$key] = array(
                                     'filename'      => $filename,
                                     'gallery3id'    => $galleryid,
                                     'caption'       => htmlspecialchars($dbrows[$filename]['caption'],ENT_COMPAT,'UTF-8',false),
-                                    'date'           => Jojo::mysql2date($dbrows[$filename]['datetime'], "medium"),
-                                    'datetime'     => $dbrows[$filename]['datetime']
+                                    'date'           => Jojo::formatTimestamp($dbrows[$filename]['gi_date'], "medium"),
+                                    'datetime'     => $dbrows[$filename]['gi_date'],
+                                    'keyimage'     => $dbrows[$filename]['keyimage'],
+                                    'sortby'     => $dbrows[$filename]['sortby']
                                    );
                     $files[$key] = array_merge($files[$key], $dbrows[$filename]);
                     unset($dbrows[$filename]);
@@ -355,48 +395,21 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                Jojo::deleteQuery("DELETE FROM {gallery3_image} WHERE `filename` = ? AND `gallery3id` = ? LIMIT 1", array($file, $galleryid));
            }
         } else {
-            $files = Jojo::selectQuery("SELECT `filename` as `key`, `filename` as filename, gi_date as datetime, gi_name as name, gi.* FROM {gallery3_image} as gi WHERE `gallery3id` = ? order by $order", $galleryid);
+            $files = Jojo::selectQuery("SELECT `filename` as `key`, `filename` as filename, gi_date as datetime, gi_name as name, gi.*, g.sortby FROM {gallery3_image} as gi LEFT JOIN {gallery3} g ON (g.gallery3id=gi.gallery3id ) WHERE gi.gallery3id = ? order by $order", $galleryid);
             foreach($files as $key => &$filename) {
                     $filename['caption'] = htmlspecialchars($filename['caption'],ENT_COMPAT,'UTF-8',false);
              }
-
         }
 
-        $gallery = Jojo::selectRow('SELECT * FROM {gallery3} WHERE gallery3id = ?', $galleryid);
-        if (isset($gallery['sortby']) && $gallery['sortby']) {
-            usort($files, array('Jojo_Plugin_Jojo_gallery3', $gallery['sortby'] . 'sort'));
-        } else {
-            usort($files, array('Jojo_Plugin_Jojo_gallery3', 'datesort'));
-        }
-
+        $sort =  (isset($files[0]['sortby']) && $files[0]['sortby']) ? $files[0]['sortby'] : 'date';
+        usort($files, array('Jojo_Plugin_Jojo_gallery3', $sort . 'sort'));
         return $files;
-    }
-
-    private static function namesort($a, $b)
-    {
-         if ($a['name']) {
-            return strcmp($a['name'],$b['name']);
-        } else {
-            return strcmp($a['filename'],$b['filename']);
-        }
-    }
-
-    private static function datesort($a, $b)
-    {
-        return strcmp($a['datetime'],$b['datetime']);
-    }
-
-    private static function imageidsort($a, $b)
-    {
-        if(isset($a['imageid']) and isset($b['imageid'])) return strcmp($a['imageid'],$b['imageid']);
-        if(isset($a['imageid'])) return 1;
-        return -1;
     }
 
     public static function getAdminHtml($galleryid)
     {
         global $smarty;
-        $files = Jojo_Plugin_Jojo_gallery3::getImages($galleryid, 1);
+        $files = self::getImages($galleryid, 1);
         $smarty->assign('images',    $files);
         $smarty->assign('galleryid', $galleryid);
         return $smarty->fetch('jojo_gallery3_admin_images.tpl');
@@ -404,8 +417,18 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 
     public function getCorrectUrl()
     {
-        //Assume the URL is correct
-        return _PROTOCOL . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        global $page;
+        $language  = $page->page['pg_language'];
+        $id = Jojo::getFormData('id',     0);
+        $url       = Jojo::getFormData('url',    '');
+        $data = Jojo::selectRow("SELECT gallerycategoryid FROM {gallerycategory} WHERE pageid=?", $page->page['pageid']);
+        $categoryid = !empty($data['gallerycategoryid']) ? $data['gallerycategoryid'] : '';
+
+        $correcturl = self::getUrl($id, $url, null, $language, $categoryid);
+        if ($correcturl) {
+            return _SITEURL . '/' . $correcturl;
+        }
+        return parent::getCorrectUrl();
     }
 
     public static function admin_action_start()
@@ -420,17 +443,123 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         return true;
     }
 
-    public static function getGalleryHtml($galleryid, $layout=false)
+    static function getPluginPages($for='', $language=false)
     {
+        $items =  Jojo::selectQuery("SELECT c.*, p.*  FROM {gallerycategory} c LEFT JOIN {page} p ON (c.pageid=p.pageid) ORDER BY pg_language, pg_parent");
+        // use core function to clean out any pages based on permission, status, expiry etc
+        $items =  Jojo_Plugin_Core::cleanItems($items, $for);
+        foreach ($items as $k=>&$i){
+            if ($language && $i['pg_language']!=$language) {
+                unset($items[$k]);
+                continue;
+            }
+        }
+        return $items;
+    }
+
+    public static function admin_action_after_save_gallery3_image()
+    {
+         if ( (isset($_FILES['fm_FILE_filename']) || isset($_POST['fm_filename'])) && isset($_POST['fm_gallery3id'])) {
+            $galleryid = $_POST['fm_gallery3id'];
+            $filename = (isset($_FILES['fm_FILE_filename']['name']) && !empty($_FILES['fm_FILE_filename']['name'])) ? $_FILES['fm_FILE_filename']['name'] : $_POST['fm_filename'];
+            $timestamp = (isset($_POST['fm_gi_date']) && !empty($_POST['fm_gi_date'])) ? $_POST['fm_gi_date'] : '';
+            if (empty($timestamp) || $timestamp=='n/a') {
+            // no timestamp submitted in the form - use the exif data if available, otherwise set to now
+                $exif = exif_read_data(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename);
+                $etimestamp = 0;
+                if (isset($exif['DateTime'])) {
+                    $datetime = explode(' ', $exif['DateTime']);
+                    $date = explode(':', $datetime[0]);
+                    $time = explode(':', $datetime[1]);
+                    $etimestamp = mktime($time[0], $time[1], $time[2], $date[1], $date[2], $date[0]);
+                }
+                $timestamp = $etimestamp ? $etimestamp : time();
+                if ( isset($_POST['fm_gallery3_imageid']) && !empty($_POST['fm_gallery3_imageid']) ) {
+                    $id = $_POST['fm_gallery3_imageid'];
+                    Jojo::updateQuery("UPDATE {gallery3_image} SET `gi_date`=? WHERE `gallery3_imageid`= ?", array($timestamp, $id));
+                } else {
+                    Jojo::updateQuery("UPDATE {gallery3_image} SET `gi_date`=? WHERE `filename`= ? AND `gallery3id` = ?", array($timestamp, $filename, $galleryid));
+                }
+            }
+
+        }
+        return true;
+    }
+    // Sync the articategory data over to the page table
+    static function admin_action_after_save_gallerycategory() {
+        if (!Jojo::getFormData('fm_pageid', 0)) {
+            // no pageid set for this category (either it's a new category or maybe the original page was deleted)
+            self::sync_category_to_page();
+       }
+    }
+
+    // Sync the category data over from the page table
+    static function admin_action_after_save_page() {
+        if (strtolower(Jojo::getFormData('fm_pg_link',    ''))=='jojo_plugin_jojo_gallery3') {
+           self::sync_page_to_category();
+       }
+    }
+
+    static function sync_category_to_page() {
+        // Get the category id (if an existing category being saved where the page has been deleted)
+        $catid = Jojo::getFormData('fm_gallerycategoryid', 0);
+        if (!$catid) {
+        // no id because this is a new category - shouldn't really be done this way, new categories should be added by adding a new page
+            $cats = Jojo::selectQuery("SELECT gallerycategoryid FROM {gallerycategory} ORDER BY gallerycategoryid");
+            // grab the highest id (assumes this is the newest one just created)
+            $cat = array_pop($cats);
+            $catid = $cat['gallerycategoryid'];
+        }
+        // add a new hidden page for this category and make up a title
+            $newpageid = Jojo::insertQuery(
+            "INSERT INTO {page} SET pg_title = ?, pg_link = ?, pg_url = ?, pg_parent = ?, pg_status = ?",
+            array(
+                'Orphaned Gallery',  // Title
+                'jojo_plugin_jojo_gallery3',  // Link
+                'orphaned-galleries',  // URL
+                0,  // Parent - don't do anything smart, just put it at the top level for now
+                'hidden' // hide new page so it doesn't show up on the live site until it's been given a proper title and url
+            )
+        );        
+        // If we successfully added the page, update the category with the new pageid
+        if ($newpageid) {
+            jojo::updateQuery(
+                "UPDATE {gallerycategory} SET pageid = ? WHERE gallerycategoryid = ?",
+                array(
+                    $newpageid,
+                    $catid
+                )
+            );
+       }
+    return true;
+    }
+
+    static function sync_page_to_category() {
+        // Get the list of categories and the page id if available
+        $categories = jojo::selectAssoc("SELECT pageid AS id, pageid FROM {gallerycategory}");
+        $pageid = Jojo::getFormData('fm_pageid', 0);
+        // if it's a new page it won't have an id in the form data, so get it from the title
+        if (!$pageid) {
+           $title = Jojo::getFormData('fm_pg_title', 0);
+           $page =  Jojo::selectRow("SELECT pageid, pg_url FROM {page} WHERE pg_title= ? AND pg_link = ? AND pg_language = ?", array($title, Jojo::getFormData('fm_pg_link', ''), Jojo::getFormData('fm_pg_language', '')));
+           $pageid = $page['pageid'];
+        }
+        // no category for this page id
+        if (!count($categories) || !isset($categories[$pageid])) { 
+            jojo::insertQuery("INSERT INTO {gallerycategory} (pageid) VALUES ('$pageid')");
+        }
+        return true;
+    }
+
+    public static function getGalleryHtml($galleryid, $gallery=false)
+    {
+        if (!$galleryid) return '';
         global $smarty;
-        $gallery = Jojo::selectRow("SELECT * FROM {gallery3} WHERE gallery3id = ?", array($galleryid));
+        $gallery = !$gallery ? self::getItemsById($galleryid) : $gallery;
         if (!isset($gallery)) return false;
-        $files = Jojo_Plugin_Jojo_gallery3::getImages($galleryid,0,$gallery['sortby']);
-        $gallery['numimages'] = count($files);
-        $gallery['layout'] = isset($gallery['layout']) ? $gallery['layout'] : "square";
-        $layout = $layout ? $layout : $gallery['layout'];
+        $layout = $gallery['layout'] ? $gallery['layout'] : 'square';
         $smarty->assign('gallery', $gallery);
-        $smarty->assign('images', $files);
+        $smarty->assign('images', $gallery['files']);
 
         if ($layout == 'jgallery') {
             $smarty->assign('galleryid', $galleryid);
@@ -485,368 +614,31 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     }
 
     /* data is an array of all fields from the database - saves an extra query */
-    public function getUrl($galleryid, $gallery=false, $language=false, $categoryid=false)
+    public function getUrl($id, $url=false, $title=false, $language=false, $categoryid=false)
     {
-
-        if (!is_array($gallery)) {
-            $gallery = Jojo::selectRow("SELECT * FROM {gallery3} WHERE gallery3id = ?", array($galleryid));
-            if (empty($gallery)) return false;
+        if (_MULTILANGUAGE) {
+            $language = !empty($language) ? $language : Jojo::getOption('multilanguage-default', 'en');
+            $multilangstring = Jojo::getMultiLanguageString($language);
         }
-
-       if (_MULTILANGUAGE) {
-            $language = !empty($gallery['language']) ? $gallery['language'] : Jojo::getOption('multilanguage-default', 'en');
-            $mldata = Jojo::getMultiLanguageData();
-            $lclanguage = $mldata['longcodes'][$language];
-        } else { $language = ''; }
-
-        $categoryid = !empty($gallery['category']) ? $gallery['category'] : '';
-
         /* URL specified */
-        if (!empty($gallery['url'])) {
-            $fullurl = (_MULTILANGUAGE) ? Jojo::getMultiLanguageString ( $language, false ) : '';
-            $fullurl .= self::_getPrefix( $language, $categoryid)  . '/' . $gallery['url'] . '/';
+        if (!empty($url)) {
+            $fullurl = (_MULTILANGUAGE ? $multilangstring : '') . self::_getPrefix($categoryid) . '/' . $url . '/';
             return $fullurl;
          }
-
-        /* Gallery ID + title specified */
-        if ($gallery['gallery3id'] && !empty($gallery['name'])) {
-            $fullurl = (_MULTILANGUAGE) ? Jojo::getMultiLanguageString ( $language, false ) : '';
-            $fullurl .= (_MULTILANGUAGE && $language != 'en') ? Jojo_Plugin_Jojo_gallery3::_getPrefix( $language, $categoryid ) . '/' . $gallery['gallery3id'] . '/' . urlencode(strtolower($gallery['name'])) : Jojo::rewrite(Jojo_Plugin_Jojo_gallery3::_getPrefix(( _MULTILANGUAGE ? $language : ''), (!empty($categoryid) ? $categoryid : '')), $gallery['gallery3id'], $gallery['name'], '');
-            return $fullurl;
+        /* ID + title specified */
+        if ($id && !empty($title)) {
+            $fullurl = (_MULTILANGUAGE ? $multilangstring : '') . self::_getPrefix($categoryid) . '/' . $id . '/' .  Jojo::cleanURL($title) . '/';
+          return $fullurl;
         }
-
-       /* No gallery matching the ID supplied or no ID supplied */
+        /* use the ID to find either the URL or title */
+        if ($id) {
+            $item = Jojo::selectRow("SELECT url, name, language, category FROM {gallery3} WHERE gallery3id = ?", array($id));
+             if ($item) {
+                return self::getUrl($id, $item['url'], $item['name'], $item['language'], $item['category']);
+            }
+         }
+        /* No matching ID or no ID supplied */
         return false;
-
-    }
-
-    public static function getGalleries($categoryid=false, $language=false, $index=false) {
-
-         /* Get category url and id if needed */
-        $_CATEGORIES = (Jojo::getOption('gallery_enable_categories', 'no') == 'yes') ? true : false ;
-        $gallerysorting = (Jojo::getOption('gallery_orderby', 'name') == 'date') ? 'g_date DESC, name' : 'name';
-        $query = "SELECT * FROM {gallery3} WHERE 1";
-        $query .= ($_CATEGORIES && $categoryid != 'all') ? " AND (`category` = '$categoryid')" : '';
-        $query .= _MULTILANGUAGE ? " AND (`language` = '$language')" : '';
-        $query .= $index ? " AND (`show` = 'index')" : '';
-        $query .= " ORDER BY `displayorder`, $gallerysorting";
-
-        $galleries = Jojo::selectQuery($query);
-
-        foreach ($galleries as &$g) {
-            $id                 = $g['gallery3id'];
-            $categoryid         = $_CATEGORIES ? $g['category'] : '';
-            $g['id']            = $id;
-            $g['name']          = htmlspecialchars($g['name'], ENT_COMPAT, 'UTF-8', false);
-            $g['baseurl']       = $g['url'];
-            $g['url']           = self::getUrl($id, $g, $language, $categoryid);
-            if (empty($g['sortby'])) {
-                $files              = self::getImages($id,0);
-            } else {
-                $files              = self::getImages($id,0,$g['sortby']);
-            }
-            $g['image']         = !empty($files[0]['filename']) ? $files[0]['filename'] :'';
-            $g['bodyplain']     = strip_tags($g['body']);
-            $g['numimages']     = !empty($files[0]) ? count($files) : 0;
-        }
-        return $galleries;
-    }
-
-    /**
-     * Sitemap filter
-     *
-     * Receives existing sitemap and adds galleries
-     */
-    public static function sitemap($sitemap)
-    {
-
-        /* See if we have any sections to display and find all of them */
-        $_CATEGORIES = (Jojo::getOption('gallery_enable_categories', 'no') == 'yes') ? true : false ;
-        $query = "SELECT *";
-        $query .= ($_CATEGORIES) ? ", gallerycategoryid" : '';
-        $query .= " FROM {page}";
-        $query .= ($_CATEGORIES) ? ' LEFT JOIN {gallerycategory} gc ON (gc_url = pg_url)' : '';
-        $query .= " WHERE pg_link = 'Jojo_Plugin_Jojo_gallery3' AND pg_sitemapnav = 'yes'";
-        $indexes = Jojo::selectQuery($query);
-        if (!count($indexes)) {
-            return $sitemap;
-        }
-
-        if (_MULTILANGUAGE) $mldata = Jojo::getMultiLanguageData();
-
-        if (Jojo::getOption('gallery_inplacesitemap', 'separate') == 'separate') {
-            /* Remove any existing links to the galleries section from the page listing on the sitemap */
-            foreach($sitemap as $j => $section) {
-                $sitemap[$j]['tree'] = self::_sitemapRemoveSelf($section['tree']);
-            }
-            $_INPLACE = false;
-        } else {
-            $_INPLACE = true;
-        }
-
-         /* Make sitemap trees for each gallery instance found */
-
-        foreach($indexes as $k => $i){
-            /* Get language and language longcode if needed */
-            $language = '';
-            if (_MULTILANGUAGE) {
-                $language = !empty($i['pg_language']) ? $i['pg_language'] : Jojo::getOption('multilanguage-default', 'en');
-                $lclanguage = $mldata['longcodes'][$language];
-            }
-            $categoryid = ($_CATEGORIES && !empty($i['gallerycategoryid'])) ? $i['gallerycategoryid'] : '';
-
-            /* Create tree and add index and feed links at the top */
-            $tree = new hktree();
-            $indexurl = (_MULTILANGUAGE ? Jojo::getMultiLanguageString ( $language, false ) : '') . self::_getPrefix((_MULTILANGUAGE ? $language : ''), $categoryid) . '/';
-            if ($_INPLACE) {
-                $parent = 0;
-            } else {
-               $tree->addNode('index', 0, $i['pg_title'] . ' Index', $indexurl);
-               $parent = 'index';
-            }
-
-             /* Get the gallery content from the database */
-            $galleries = self::getGalleries($categoryid, $language);
-            $n = count($galleries);
-
-          /* do not add anything else to sitemap if there is only one gallery in this index and singlepage option is set */
-            if (($n == 1) && (Jojo::getOption('gallery3_single_page') == 'yes')) {
-                continue;
-            }
-
-             foreach ($galleries as $g) {
-                $tree->addNode($g['id'], $parent, $g['name'], self::getUrl($g['id'], $g['url'], $language, $categoryid));
-            }
-
-            /* Add to the sitemap array */
-            if ($_INPLACE) {
-                /* Add inplace */
-                $url = ((_MULTILANGUAGE) ? Jojo::getMultiLanguageString( $language, false ) : '') . self::_getPrefix(( _MULTILANGUAGE ? $language : ''), $categoryid) . '/';
-                $sitemap['pages']['tree'] = self::_sitemapAddInplace($sitemap['pages']['tree'], $tree->asArray(), $url);
-            } else {
-                /* Add to the end */
-                $sitemap["galleries$k"] = array(
-                    'title' => $i['pg_title'] . ( _MULTILANGUAGE ? ' (' . ucfirst($lclanguage) . ')' : ''),
-                    'tree' => $tree->asArray(),
-                    'order' => 3 + $k,
-                    'header' => '',
-                    'footer' => '',
-                    );
-            }
-        }
-        return $sitemap;
-    }
-
-    static function _sitemapAddInplace($sitemap, $toadd, $url)
-    {
-        foreach ($sitemap as $k => $t) {
-            if ($t['url'] == $url) {
-                $sitemap[$k]['children'] = $toadd;
-            } elseif (isset($sitemap[$k]['children'])) {
-                $sitemap[$k]['children'] = self::_sitemapAddInplace($t['children'], $toadd, $url);
-            }
-        }
-        return $sitemap;
-    }
-
-    static function _sitemapRemoveSelf($tree)
-    {
-        static $urls;
-
-        if (!is_array($urls)) {
-            $mldata = Jojo::getMultiLanguageData();
-            $urls = array();
-            $_CATEGORIES = (Jojo::getOption('gallery_enable_categories', 'no') == 'yes') ? true : false ;
-            $query = "SELECT *";
-            $query .= ($_CATEGORIES) ? ", gallerycategoryid" : '';
-            $query .= " FROM {page}";
-            $query .= ($_CATEGORIES) ? ' LEFT JOIN {gallerycategory} gc ON (gc_url = pg_url)' : '';
-            $query .= " WHERE pg_link = 'Jojo_Plugin_Jojo_gallery3' AND pg_sitemapnav = 'yes'";
-            $indexes = Jojo::selectQuery($query);
-            if (count($indexes)==0) {
-               return $tree;
-            }
-
-            foreach($indexes as $key => $i){
-                $language = !empty($i['pg_language']) ? $i['pg_language'] : Jojo::getOption('multilanguage-default', 'en');
-                $lclanguage = $mldata['longcodes'][$language];
-                $urls[] = ((_MULTILANGUAGE) ? Jojo::getMultiLanguageString ( $language, false ) : '') . self::_getPrefix( ( _MULTILANGUAGE ? $language : ''), (!empty($i['gallerycategoryid']) ? $i['gallerycategoryid'] : '' )) . '/';
-            }
-        }
-
-        foreach ($tree as $k =>$t) {
-            if (in_array($t['url'], $urls)) {
-                unset($tree[$k]);
-            } else {
-                $tree[$k]['children'] = self::_sitemapRemoveSelf($t['children']);
-            }
-        }
-        return $tree;
-    }
-
-
-    public static function numGalleries()
-    {
-        static $num;
-        if (isset($num)) return $num;
-        $data = Jojo::selectQuery("SELECT COUNT(*) AS numgalleries FROM {gallery3} WHERE 1 GROUP BY gallery3id");
-        if (!count($data)) return 0;
-        $num = $data[0]['numgalleries'];
-        return $num;
-    }
-
-    /**
-     * XML Sitemap filter
-     *
-     * Receives existing sitemap and adds gallery pages
-     */
-    public static function xmlsitemap($sitemap)
-    {
-        /* do not add anything to sitemap if there is only one gallery and singlepage option is set */
-        if ((self::numGalleries() == 1) && (Jojo::getOption('gallery3_single_page') == 'yes')) {
-            return $sitemap;
-        }
-
-        /* Get galleries from database */
-        $galleries = Jojo::selectQuery("SELECT * FROM {gallery3} WHERE 1");
-
-        /* Add galleries to sitemap */
-        foreach($galleries as $g) {
-            $url                = _SITEURL . '/'. self::getUrl($g['gallery3id'], $g, $g['language'], $g['category']);
-            $lastmod       = '';
-            $priority         = 0.6;
-            $changefreq    = '';
-            $sitemap[$url] = array($url, $lastmod, $changefreq, $priority);
-        }
-
-        /* Return sitemap */
-        return $sitemap;
-    }
-
-
-    /**
-     * Site Search
-     *
-     */
-    public static function search($results, $keywords, $language, $booleankeyword_str=false)
-    {
-        $_CATEGORIES = (Jojo::getOption('gallery_enable_categories', 'no') == 'yes') ? true : false ;
-        $_TAGS = class_exists('Jojo_Plugin_Jojo_Tags') ? true : false ;
-        $tagid = ($_TAGS) ? Jojo_Plugin_Jojo_Tags::_getTagId(implode(' ', $keywords)): '';
-
-        global $_USERGROUPS;
-        $pagePermissions = new JOJO_Permissions();
-        $boolean = ($booleankeyword_str) ? true : false;
-        $keywords_str = ($boolean) ? $booleankeyword_str :  implode(' ', $keywords);
-        if ($boolean && stripos($booleankeyword_str, '+') === 0  ) {
-            $like = '1';
-            foreach ($keywords as $keyword) {
-                $like .= sprintf(" AND (gallery3.name LIKE '%%%s%%' OR gallery3.body LIKE '%%%s%%')", JOJO::clean($keyword), JOJO::clean($keyword));
-            }
-        } elseif ($boolean && stripos($booleankeyword_str, '"') === 0) {
-            $like = "gallery3.name LIKE '%%%". implode(' ', $keywords). "%%' OR gallery3.body LIKE '%%%". implode(' ', $keywords) . "%%'";
-        } else {
-            $like = '0';
-            foreach ($keywords as $keyword) {
-                $like .= sprintf(" OR gallery3.name LIKE '%%%s%%' OR gallery3.body LIKE '%%%s%%'", JOJO::clean($keyword), JOJO::clean($keyword));
-            }
-        }
-
-        $query = "SELECT gallery3id, url, gallery3.name, body, language, category, ((MATCH(gallery3.name) AGAINST (?" . ($boolean ? ' IN BOOLEAN MODE' : '') . ") * 0.2) + MATCH(gallery3.name, gallery3.body) AGAINST (?" . ($boolean ? ' IN BOOLEAN MODE' : '') . ")) AS relevance";
-        $query .= ", p.pg_url, p.pg_title ";
-        $query .= "FROM {gallery3} AS gallery3 ";
-        $query .= $_CATEGORIES ? " LEFT JOIN {gallerycategory} gc ON (gallery3.category=gc.gallerycategoryid) LEFT JOIN {page} p ON (gc.gc_url=p.pg_url AND p.pg_language=gallery3.language)" : "LEFT JOIN {page} p ON (p.pg_link='Jojo_Plugin_Jojo_gallery3' AND p.pg_language=gallery3.language)";
-        $query .= "LEFT JOIN {language} AS language ON (gallery3.language = languageid) ";
-        $query .= $tagid ? " LEFT JOIN {tag_item} AS tag ON (tag.itemid = gallery3.gallery3id AND tag.plugin='jojo_gallery3' AND tag.tagid = $tagid)" : '';
-        $query .= "WHERE ($like";
-        $query .= $tagid ? " OR (tag.itemid = gallery3.gallery3id AND tag.plugin='jojo_gallery3' AND tag.tagid = $tagid))" : ')';
-        $query .= ($language) ? "AND gallery3.language = '$language' " : '';
-        $query .= "AND language.active = 'yes' ";
-        $query .= " ORDER BY relevance DESC LIMIT 100";
-
-        $data = Jojo::selectQuery($query, array($keywords_str, $keywords_str));
-
-
-        if (_MULTILANGUAGE) {
-            global $page;
-            $mldata = Jojo::getMultiLanguageData();
-            $homes = $mldata['homes'];
-        } else {
-            $homes = array(1);
-        }
-
-        foreach ($data as $d) {
-            $pagePermissions->getPermissions('gallery', $d['gallery3id']);
-            if (!$pagePermissions->hasPerm($_USERGROUPS, 'view')) {
-                continue;
-            }
-            $result = array();
-            $result['relevance'] = $d['relevance'];
-            $result['title'] = $d['name'];
-            $result['body'] = $d['body'];
-            $result['url'] = Jojo_Plugin_Jojo_gallery3::getUrl($d['gallery3id'], $d, $d['language'], $d['category']);
-            $result['absoluteurl'] = _SITEURL. '/' . $result['url'];
-            $result['id'] = $d['gallery3id'];
-            $result['plugin'] = 'jojo_gallery3';
-            $result['type'] = isset($d['pg_title']) ? $d['pg_title'] : 'Galleries';
-            $results[] = $result;
-        }
-
-        if ($boolean && stripos($booleankeyword_str, '+') === 0  ) {
-            $like = '1';
-            foreach ($keywords as $keyword) {
-                $like .= sprintf(" AND (g3i.caption LIKE '%%%s%%' OR g3i.gi_name LIKE '%%%s%%')", JOJO::clean($keyword), JOJO::clean($keyword));
-            }
-        } elseif ($boolean && stripos($booleankeyword_str, '"') === 0) {
-            $like = "g3i.caption LIKE '%%%". implode(' ', $keywords). "%%' OR g3i.gi_name LIKE '%%%". implode(' ', $keywords) . "%%'";
-        } else {
-            $like = '0';
-            foreach ($keywords as $keyword) {
-                $like .= sprintf(" OR g3i.caption LIKE '%%%s%%' OR g3i.gi_name LIKE '%%%s%%'", JOJO::clean($keyword), JOJO::clean($keyword));
-            }
-        }
-        $query = "SELECT g3i.gallery3id, url, g3.name, body, language, category, caption, gi_name, filename, ((MATCH(g3i.caption) AGAINST (?" . ($boolean ? ' IN BOOLEAN MODE' : '') . ") * 0.2) + (MATCH(g3i.caption, g3i.gi_name) AGAINST (?" . ($boolean ? ' IN BOOLEAN MODE' : '') . ")) * 0.8) AS relevance ";
-        $query .= ", p.pg_url, p.pg_title ";
-        $query .= "FROM {gallery3_image} as g3i ";
-        $query .= "LEFT JOIN {gallery3} AS g3 ON (g3i.gallery3id = g3.gallery3id) ";
-        $query .= $_CATEGORIES ? " LEFT JOIN {gallerycategory} gc ON (g3.category=gc.gallerycategoryid) LEFT JOIN {page} p ON (gc.gc_url=p.pg_url AND p.pg_language=g3.language)" : "LEFT JOIN {page} p ON (p.pg_link='Jojo_Plugin_Jojo_gallery3' AND p.pg_language=g3.language)";
-        $query .= "LEFT JOIN {language} AS language ON (g3.language = languageid) ";
-        $query .= "WHERE $like";
-        $query .= ($language) ? "AND g3.language = '$language' " : '';
-        $query .= "AND language.active = 'yes' ";
-        $query .= " ORDER BY relevance DESC LIMIT 100";
-        $data = Jojo::selectQuery($query, array($keywords_str, $keywords_str));
-
-        if (_MULTILANGUAGE) {
-            global $page;
-            $mldata = Jojo::getMultiLanguageData();
-            $homes = $mldata['homes'];
-        } else {
-            $homes = array(1);
-        }
-
-        foreach ($data as $d) {
-            $pagePermissions->getPermissions('gallery', $d['gallery3id']);
-            if (!$pagePermissions->hasPerm($_USERGROUPS, 'view')) {
-                continue;
-            }
-            $result = array();
-            $result['relevance'] = $d['relevance'];
-            $result['title'] = ($d['gi_name'] ? $d['gi_name'] : $d['filename'] );
-            $result['body'] = $d['caption'];
-            $result['image'] = 'gallery3/' . $d['gallery3id'] . '/' . $d['filename'];
-            $result['url'] = Jojo_Plugin_Jojo_gallery3::getUrl($d['gallery3id'], $d, $d['language'], $d['category']);
-            $result['absoluteurl'] = _SITEURL. '/' . $result['url'];
-            $result['id'] = $d['gallery3id'];
-            $result['plugin'] = 'jojo_gallery3';
-            $result['type'] = isset($d['pg_title']) ? $d['pg_title'] : 'Galleries';
-            $results[] = $result;
-        }
-
-
-
-        /* Return results */
-        return $results;
     }
 
 
@@ -865,6 +657,189 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         if ($sort == 1) rsort($files, SORT_STRING);
         else sort($files, SORT_STRING);
         return $files;
+    }    
+
+    /**
+     * Sitemap filter
+     *
+     * Receives existing sitemap and adds galleries
+     */
+    public static function sitemap($sitemap)
+    {
+        global $page;
+        /* See if we have any plugin pages to display and find all of them */
+        $indexes =  self::getPluginPages('sitemap');
+        if (!count($indexes)) {
+            return $sitemap;
+        }
+        if (Jojo::getOption('gallery_inplacesitemap', 'separate') == 'separate') {
+            /* Remove any existing links to the galleries section from the page listing on the sitemap */
+            foreach($sitemap as $j => $section) {
+                $sitemap[$j]['tree'] = self::_sitemapRemoveSelf($section['tree']);
+            }
+            $_INPLACE = false;
+        } else {
+            $_INPLACE = true;
+        }
+
+         /* Make sitemap trees for each page found */
+        $limit = 15;
+        foreach($indexes as $k => $i){
+            $categoryid = $i['gallerycategoryid'];
+            /* Create tree and add index and feed links at the top */
+            $tree = new hktree();
+            $indexurl = $i['url'];
+            if ($_INPLACE) {
+                $parent = 0;
+            } else {
+               $tree->addNode('index', 0, $i['title'], $indexurl);
+               $parent = 'index';
+            }
+            $galleries = self::getGalleries($categoryid);
+            $n = count($galleries);
+
+          /* do not add anything else to sitemap if there is only one gallery in this index and singlepage option is set */
+            if (($n == 1) && (Jojo::getOption('gallery3_single_page') == 'yes')) {
+                continue;
+            }
+             foreach ($galleries as $g) {
+                $tree->addNode($g['id'], $parent, $g['title'], $g['url']);
+            }
+            /* Add to the sitemap array */
+            if ($_INPLACE) {
+                /* Add inplace */
+                $url = $i['url'];
+                $sitemap['pages']['tree'] = self::_sitemapAddInplace($sitemap['pages']['tree'], $tree->asArray(), $url);
+            } else {
+                if (_MULTILANGUAGE) {
+                    $mldata = Jojo::getMultiLanguageData();
+                    $lclanguage = $mldata['names'][$i['pg_language']];
+                }
+                /* Add to the end */
+                $sitemap["galleries$k"] = array(
+                    'title' => $i['title'] . ( _MULTILANGUAGE ? ' (' . ucfirst($lclanguage) . ')' : ''),
+                    'tree' => $tree->asArray(),
+                    'order' => 3 + $k,
+                    'header' => '',
+                    'footer' => '',
+                    );
+            }
+        }
+        return $sitemap;
+    }
+
+    static function _sitemapAddInplace($sitemap, $toadd, $url)
+    {
+        foreach ($sitemap as $k => $t) {
+            if ($t['url'] == $url) {
+                $sitemap[$k]['children'] = isset($sitemap[$k]['children']) ? array_merge($toadd, $sitemap[$k]['children']): $toadd;
+            } elseif (isset($sitemap[$k]['children'])) {
+                $sitemap[$k]['children'] = self::_sitemapAddInplace($t['children'], $toadd, $url);
+            }
+        }
+        return $sitemap;
+    }
+
+    static function _sitemapRemoveSelf($tree)
+    {
+        static $urls;
+
+        if (!is_array($urls)) {
+            $urls = array();
+            $indexes =  self::getPluginPages('sitemap');
+            if (count($indexes)==0) {
+               return $tree;
+            }
+            foreach($indexes as $key => $i){
+                $urls[] = $i['url'];
+            }
+        }
+        foreach ($tree as $k =>$t) {
+            if (in_array($t['url'], $urls)) {
+                unset($tree[$k]);
+            } else {
+                $tree[$k]['children'] = self::_sitemapRemoveSelf($t['children']);
+            }
+        }
+        return $tree;
+    }
+
+    public static function numGalleries()
+    {
+        static $num;
+        if (isset($num)) return $num;
+        $data = Jojo::selectQuery("SELECT COUNT(*) AS numgalleries FROM {gallery3} WHERE 1 GROUP BY gallery3id");
+        if (!count($data)) return 0;
+        $num = $data[0]['numgalleries'];
+        return $num;
+    }
+
+    /**
+     * XML Sitemap filter
+     *
+     * Receives existing sitemap and adds gallery pages
+     */
+    static function xmlsitemap($sitemap)
+    {
+        /* Get articles from database */
+        $items = self::getGalleries('all', 'alllanguages');
+        $now = time();
+        $indexes =  self::getPluginPages('xmlsitemap');
+        $ids=array();
+        foreach ($indexes as $i) {
+            $ids[$i['gallerycategoryid']] = true;
+        }
+        /* Add items to sitemap */
+        foreach($items as $k => $a) {
+            // strip out items from expired pages
+            if (!isset($ids[$a['category']])) {
+                unset($items[$k]);
+                continue;
+            }
+            $url = _SITEURL . '/'. $a['url'];
+            $lastmod = $a['date'];
+            $priority = 0.6;
+            $changefreq = '';
+            $sitemap[$url] = array($url, $lastmod, $changefreq, $priority);
+        }
+        /* Return sitemap */
+        return $sitemap;
+    }
+
+    /**
+     * Site Search
+     */
+    static function search($results, $keywords, $language, $booleankeyword_str=false)
+    {
+        $searchfields = array(
+            'plugin' => 'jojo_gallery3',
+            'table' => 'gallery3',
+            'idfield' => 'gallery3id',
+            'languagefield' => 'language',
+            'primaryfields' => 'name',
+            'secondaryfields' => 'name, body',
+        );
+        $rawresults =  Jojo_Plugin_Jojo_search::searchPlugin($searchfields, $keywords, $language, $booleankeyword_str=false);
+        $data = $rawresults ? self::getItemsById(array_keys($rawresults)) : '';
+        if ($data) {
+            foreach ($data as $result) {
+                $result['relevance'] = $rawresults[$result['id']]['relevance'];
+                $result['type'] = $result['pagetitle'];
+                $result['tags'] = isset($rawresults[$result['id']]['tags']) ? $rawresults[$result['id']]['tags'] : '';
+                $results[] = $result;
+            }
+        }
+        /* Return results */
+        return $results;
+    }
+    
+    /*
+    * Tags
+    */
+    static function getTagSnippets($ids)
+    {
+        $snippets = self::getItemsById($ids);
+        return $snippets;
     }
 
 }

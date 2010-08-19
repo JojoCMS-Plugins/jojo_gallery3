@@ -30,6 +30,9 @@ Jojo::addFilter('jojo_xml_sitemap', 'xmlsitemap', 'jojo_gallery3');
 
 /* capture the button press in the admin section */
 Jojo::addHook('admin_action_start', 'admin_action_start', 'jojo_gallery3');
+Jojo::addHook('admin_action_after_save_page', 'admin_action_after_save_page', 'jojo_gallery3');
+Jojo::addHook('admin_action_after_save_gallerycategory', 'admin_action_after_save_gallerycategory', 'jojo_gallery3');
+Jojo::addHook('admin_action_after_save_gallery3_image', 'admin_action_after_save_gallery3_image', 'jojo_gallery3');
 
 /* add lightbox javascript to head */
 Jojo::addHook('customhead', 'customhead', 'jojo_gallery3');
@@ -38,14 +41,13 @@ Jojo::addHook('customhead', 'customhead', 'jojo_gallery3');
 $_provides['fieldTypes'] = array('gallery3images' => 'Gallery3 images', 'gallery3image' => 'Gallery3 display image', 'dblist_g3' => 'Gallery3 images gallery list');
 
 /* Gallery filter for grabbing [[gallery3: my-gallery]] */
-Jojo::addFilter('content', 'contentFilter', 'jojo_gallery3');
+Jojo::addFilter('output', 'contentFilter', 'jojo_gallery3');
 
 /* Search Filter */
 Jojo::addFilter('jojo_search', 'search', 'jojo_gallery3');
 
-
 /* Register URI handlers */
-Jojo::registerURI(null, 'Jojo_Plugin_Jojo_gallery3', 'isUrl');
+Jojo::registerURI(null, 'jojo_plugin_jojo_gallery3', 'isUrl');
 
 /* Get the names of the galleries from the database to serve as examples in the UI - easier than remembering */
 $galleries = Jojo_Plugin_Jojo_gallery3::getGalleries();

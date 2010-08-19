@@ -27,12 +27,13 @@ $query = "
         `bodycode` text NOT NULL,
         `body` text NOT NULL,
         `url` varchar(255) NOT NULL default '',
-        `g_date` timestamp NOT NULL default CURRENT_TIMESTAMP,
+        `g_date` int(11) NOT NULL default '0',
         `displayorder` int(11) NOT NULL default '0',
         `layout` enum('square','magazine','jgallery') default 'square',
         `show` enum('index','filter') default 'index',
         `thumbsize` varchar(255) NOT NULL default '',
         `previewsize` varchar(255) NOT NULL default '',
+        `indeximage` varchar(255) NOT NULL default '',
         `metadescription` varchar(255) NOT NULL default '',
         `language` varchar(100) NOT NULL default 'en',
         `html_lang` varchar(100) NOT NULL default 'en',
@@ -47,6 +48,21 @@ $query = "
 
 /* Check table structure */
 $result = Jojo::checkTable($table, $query);
+
+/* Convert mysql date format to unix timestamps */
+if (Jojo::tableExists($table) && Jojo::getMySQLType($table, 'g_date') == 'timestamp') {
+    date_default_timezone_set(Jojo::getOption('sitetimezone', 'Pacific/Auckland'));
+    $items = Jojo::selectQuery("SELECT gallery3id, g_date FROM {gallery3}");
+    Jojo::structureQuery("ALTER TABLE  {gallery3} CHANGE  `g_date`  `g_date` INT(11) NOT NULL DEFAULT '0'");
+    foreach ($items as $k => $a) {
+        if ($a['g_date']!='0000-00-00') {
+            $timestamp = Jojo::strToTimeUK($a['g_date']);
+        } else {
+            $timestamp = 0;
+        }
+       Jojo::updateQuery("UPDATE {gallery3} SET g_date=? WHERE gallery3id=?", array($timestamp, $a['gallery3id']));
+    }
+}
 
 /* Output result */
 if (isset($result['created'])) {
@@ -68,8 +84,10 @@ $table = 'gallerycategory';
 $query = "
     CREATE TABLE {gallerycategory} (
       `gallerycategoryid` int(11) NOT NULL auto_increment,
+      `pageid` int(11) NOT NULL default '0',
       `gc_url` varchar(255) NOT NULL default '',
-      PRIMARY KEY  (`gallerycategoryid`)
+      PRIMARY KEY  (`gallerycategoryid`),
+      KEY `id` (`pageid`)
     ) TYPE=MyISAM ;";
 
 /* Check table structure */
@@ -95,17 +113,32 @@ $query = "
     CREATE TABLE {gallery3_image} (
       `gallery3_imageid` int(11) NOT NULL auto_increment,
       `gi_name` varchar(255) NOT NULL default '',
-      `gi_date` datetime NOT NULL,
+      `gi_date` int(11) NOT NULL default '0',
       `gi_order` int(11) NOT NULL default '0',
       `filename` varchar(255) NOT NULL default '',
       `caption` varchar(255) NOT NULL default '',
       `credit` varchar(255) NOT NULL default '',
+      `keyimage` tinyint(1) NOT NULL default '0',
       `gallery3id` int(11) NOT NULL default '0',
       PRIMARY KEY  (`gallery3_imageid`),
       FULLTEXT KEY `title` (`caption`),
       FULLTEXT KEY `body` (`caption`,`gi_name`)
     ) TYPE=MyISAM ;";
 
+/* Convert mysql date format to unix timestamps */
+if (Jojo::tableExists($table) && Jojo::getMySQLType($table, 'gi_date') == 'datetime') {
+    date_default_timezone_set(Jojo::getOption('sitetimezone', 'Pacific/Auckland'));
+    $items = Jojo::selectQuery("SELECT gallery3_imageid, gi_date FROM {gallery3_image}");
+    Jojo::structureQuery("ALTER TABLE  {gallery3_image} CHANGE  `gi_date`  `gi_date` INT(11) NOT NULL DEFAULT '0'");
+    foreach ($items as $k => $a) {
+        if ($a['gi_date']!='0000-00-00') {
+            $timestamp = Jojo::strToTimeUK($a['gi_date']);
+        } else {
+            $timestamp = 0;
+        }
+       Jojo::updateQuery("UPDATE {gallery3_image} SET gi_date=? WHERE gallery3_imageid=?", array($timestamp, $a['gallery3_imageid']));
+    }
+}
 /* Check table structure */
 $result = Jojo::checkTable($table, $query);
 
