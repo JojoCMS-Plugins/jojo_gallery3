@@ -17,7 +17,7 @@
 
 <script type="text/javascript">
 $(document).ready(function(){ldelim}
-    $("#jgallery-{$galleryid} .jg-thumbnails li a").hover(function(){ldelim}
+    $("#jgallery-{$galleryid} .jg-thumbnails li a").click(function(){ldelim}
         $("#jgallery-{$galleryid} .jg-large img").hide().attr({ldelim}"src": $(this).attr("href"), "title": $("> img", this).attr("title"), "alt": $("> img", this).attr("title"){rdelim});
 		$("#jgallery-{$galleryid} .jg-caption p").html($("> img", this).attr("title"));
 		return false;

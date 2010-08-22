@@ -157,7 +157,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $categorydata =  Jojo::selectRow("SELECT * FROM {gallerycategory} WHERE `pageid` = ?", array($pageid));
         $categoryid = isset($categorydata['gallerycategoryid']) ? $categorydata['gallerycategoryid'] : '';
 
-        $galleries = self::getGalleries($categoryid, $language);
+        $galleries = self::getGalleries($categoryid, (_MULTILANGUAGE ? $language : ''));
 
         /* if there is only one gallery and singlepage option is set, display the gallery data instead */
         $single = false;
@@ -558,11 +558,11 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $gallery = !$gallery ? self::getItemsById($galleryid) : $gallery;
         if (!isset($gallery)) return false;
         $layout = $gallery['layout'] ? $gallery['layout'] : 'square';
+        $smarty->assign('galleryid', $galleryid);
         $smarty->assign('gallery', $gallery);
         $smarty->assign('images', $gallery['files']);
 
         if ($layout == 'jgallery') {
-            $smarty->assign('galleryid', $galleryid);
             return $smarty->fetch('jojo_gallery3_jgallery.tpl');
 
         } elseif ($layout == 'magazine2' || $layout == 'magazine') {
@@ -573,11 +573,11 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $mag = new magazineLayout2('400',1);
             $mag->template    = '<img src="images/[width]x[height]/[image]" alt="[alt]" title="[title]" width="[width]" height="[height]" />';
             $mag->square      = true;
-            $mag->orientation = right;
+            $mag->orientation = 'right';
             $mag->prefix      = 'images/default/';
-            $max              = min(10, count($files)); //the magazine2 script only supports 10 images at present
+            $max              = min(10, count($gallery['files'])); //the magazine2 script only supports 10 images at present
             for ($i=0;$i<$max;$i++) {
-                $mag->add(_DOWNLOADDIR.'/gallery3/' . $galleryid . '/' . $files[$i]['filename'], 'gallery3/' . $galleryid . '/' . $files[$i]['filename']);
+                $mag->add(_DOWNLOADDIR.'/gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename'], 'gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename']);
             }
             //$mag->setSelected('l1.jpg');
 
@@ -585,8 +585,6 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             return $smarty->fetch('jojo_gallery3_magazine2.tpl');
 
         } else {
-            $smarty->assign('images', $files);
-            $smarty->assign('galleryid', $galleryid);
             return $smarty->fetch('jojo_gallery3_square.tpl');
         }
     }
