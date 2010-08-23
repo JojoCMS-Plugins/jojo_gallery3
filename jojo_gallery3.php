@@ -28,6 +28,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $query .= $categoryid == 'all' && $language && $language != 'alllanguages' ? " AND (`language` = '$language')" : '';
         $galleries = Jojo::selectQuery($query);
         $galleries = self::cleanItems($galleries);
+        $galleries = self::formatItems($galleries);
         $galleries =  self::sortItems($galleries, $sortby);
         return $galleries;
     }
@@ -38,7 +39,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $query .= " LEFT JOIN {gallerycategory} c ON (i.category=c.gallerycategoryid) LEFT JOIN {page} p ON (c.pageid=p.pageid)";
         $query .=  is_array($ids) ? " WHERE gallery3id IN ('". implode("',' ", $ids) . "')" : " WHERE gallery3id=$ids";
         $items = Jojo::selectQuery($query);
-        $items = self::cleanItems($items);
+        $items = self::formatItems($items);
         $items = is_array($ids) ? self::sortItems($items, $sortby) : $items[0];
         return $items;
     }
@@ -52,7 +53,13 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                 unset($items[$k]);
                 continue;
             }
-            $i['pagetitle'] = $pagedata[0]['title'];
+        }
+        return $items;
+    }
+    
+    static function formatItems($items) {
+         foreach ($items as $k=>&$i){
+           $i['pagetitle'] = $pagedata[0]['title'];
             $i['pageurl']   = $pagedata[0]['url'];
             $i['id']           = $i['gallery3id'];
             $i['title']        = htmlspecialchars($i['name'], ENT_COMPAT, 'UTF-8', false);
@@ -551,7 +558,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         return true;
     }
 
-    public static function getGalleryHtml($galleryid, $gallery=false)
+    public static function getGalleryHtml($galleryid, $gallery=false, $clean=true)
     {
         if (!$galleryid) return '';
         global $smarty;
@@ -579,8 +586,6 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             for ($i=0;$i<$max;$i++) {
                 $mag->add(_DOWNLOADDIR.'/gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename'], 'gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename']);
             }
-            //$mag->setSelected('l1.jpg');
-
             $smarty->assign('mag', $mag->output());
             return $smarty->fetch('jojo_gallery3_magazine2.tpl');
 
@@ -604,7 +609,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                 $id = $gallery['gallery3id'];
             }
             if (isset($id)) {
-                $html      = self::getGalleryHtml($id);
+                $html      = self::getGalleryHtml($id, '', $clean=false);
                 $content   = str_replace($matches[0][$k], $html, $content);
             }
         }
@@ -820,6 +825,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $rawresults =  Jojo_Plugin_Jojo_search::searchPlugin($searchfields, $keywords, $language, $booleankeyword_str=false);
         $data = $rawresults ? self::getItemsById(array_keys($rawresults)) : '';
         if ($data) {
+            $data= self::cleanItems($data);
             foreach ($data as $result) {
                 $result['relevance'] = $rawresults[$result['id']]['relevance'];
                 $result['type'] = $result['pagetitle'];
