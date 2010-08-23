@@ -19,7 +19,7 @@
 class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 {
 
-    public static function getGalleries($categoryid=false, $language=false, $sortby='g_date desc') {
+    public static function getGalleries($categoryid=false, $language=false, $sortby='g_date desc', $include=false) {
         $gallerysorting = (Jojo::getOption('gallery_orderby', 'name') == 'date') ? 'g_date DESC, name' : 'name';
         $query  = "SELECT i.*, c.*, p.pageid, pg_menutitle, pg_title, pg_url, pg_status, pg_language, pg_livedate, pg_expirydate";
         $query .= " FROM {gallery3} i";
@@ -27,7 +27,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $query .= $categoryid && $categoryid != 'all' ? " AND category = '$categoryid'" : ' AND category != 0';
         $query .= $categoryid == 'all' && $language && $language != 'alllanguages' ? " AND (`language` = '$language')" : '';
         $galleries = Jojo::selectQuery($query);
-        $galleries = self::cleanItems($galleries);
+        $galleries = self::cleanItems($galleries, '', $include);
         $galleries = self::formatItems($galleries);
         $galleries =  self::sortItems($galleries, $sortby);
         return $galleries;
@@ -165,7 +165,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $categorydata =  Jojo::selectRow("SELECT * FROM {gallerycategory} WHERE `pageid` = ?", array($pageid));
         $categoryid = isset($categorydata['gallerycategoryid']) ? $categorydata['gallerycategoryid'] : '';
 
-        $galleries = self::getGalleries($categoryid, (_MULTILANGUAGE ? $language : ''));
+        $galleries = self::getGalleries($categoryid, (_MULTILANGUAGE ? $language : ''), '', $include='showhidden');
 
         /* if there is only one gallery and singlepage option is set, display the gallery data instead */
         $single = false;
