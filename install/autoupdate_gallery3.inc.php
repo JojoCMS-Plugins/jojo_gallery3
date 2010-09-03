@@ -27,6 +27,7 @@ $default_td['gallery3'] = array(
         'td_topsubmit' => "yes",
         'td_deleteoption' => "yes",
         'td_menutype' => "tree",
+        'td_plugin' => "Jojo_gallery3",
     );
 
 $o = 1;
@@ -367,7 +368,7 @@ $default_td[$table] = array(
         'td_topsubmit' => "yes",
         'td_deleteoption' => "yes",
         'td_menutype' => "list",
-        'td_help' => "Gallery categories are managed from here.",
+        'td_help' => "Gallery page options are managed from here.",
         'td_defaultpermissions' => "everyone.show=1\neveryone.view=1\neveryone.edit=1\neveryone.add=1\neveryone.delete=1\nadmin.show=1\nadmin.view=1\nadmin.edit=1\nadmin.add=1\nadmin.delete=1\nnotloggedin.show=1\nnotloggedin.view=1\nnotloggedin.edit=1\nnotloggedin.add=1\nnotloggedin.delete=1\nregistered.show=1\nregistered.view=1\nregistered.edit=1\nregistered.add=1\nregistered.delete=1\nsysinstall.show=1\nsysinstall.view=1\nsysinstall.edit=1\nsysinstall.add=1\nsysinstall.delete=1\n",
         'td_plugin' => "Jojo_gallery3",
     );
@@ -397,8 +398,17 @@ $default_fd[$table]['pageid'] = array(
         'fd_tabname' => "Content",
     );
 
-
 // Name Field
+$default_fd[$table]['addtonav'] = array(
+        'fd_name' => "Show Galleries in Nav",
+        'fd_type' => "yesno",
+        'fd_help' => "Add galleries to navigation as child pages of this one.",
+        'fd_default' => "0",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+    
+// Url Field (deprecated)
 $default_fd[$table]['gc_url'] = array(
         'fd_name' => "Category URL",
         'fd_type' => "hidden",

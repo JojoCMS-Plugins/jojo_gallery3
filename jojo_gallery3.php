@@ -240,6 +240,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 
         } else {
             $smarty->assign('galleries', $galleries);
+            $smarty->assign('pagecontent', $this->page['pg_body']);
             $content['content'] = $smarty->fetch('jojo_gallery3_index.tpl');
         }
         return $content;
@@ -452,9 +453,9 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         return true;
     }
 
-    static function getPluginPages($for='', $language=false)
+    static function getPluginPages($for='', $language=false, $pageid=false)
     {
-        $items =  Jojo::selectQuery("SELECT c.*, p.*  FROM {gallerycategory} c LEFT JOIN {page} p ON (c.pageid=p.pageid) ORDER BY pg_language, pg_parent");
+        $items =  Jojo::selectQuery("SELECT c.*, p.*  FROM {gallerycategory} c LEFT JOIN {page} p ON (c.pageid=p.pageid)". ($pageid ? " WHERE p.pageid = '$pageid'" : '') . " ORDER BY pg_language, pg_parent");
         // use core function to clean out any pages based on permission, status, expiry etc
         $items =  Jojo_Plugin_Core::cleanItems($items, $for);
         foreach ($items as $k=>&$i){
@@ -464,6 +465,28 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             }
         }
         return $items;
+    }
+
+    static function getNavItems($pageid, $selected=false) 
+    {
+        $nav = array();
+        $gallerypages = self::getPluginPages('', '', $pageid);
+        if (!$gallerypages) return $nav;
+        $categoryid = $gallerypages[0]['gallerycategoryid'];
+        $galleries = isset($gallerypages[0]['addtonav']) && $gallerypages[0]['addtonav'] ? self::getGalleries($categoryid) : '';
+        if (!$galleries) return $nav;
+        //if the gallery index is currently selected, check to see if a gallery has been called
+        if ($selected) {
+            $id = Jojo::getFormData('id', 0);
+            $url = Jojo::getFormData('url', '');
+        }
+        foreach ($galleries as $g) {
+            $nav[$g['id']]['url'] = $g['url'];
+            $nav[$g['id']]['title'] = $g['title'];
+            $nav[$g['id']]['label'] = $g['title'];
+            $nav[$g['id']]['selected'] = (boolean)($selected && (($id && $id== $g['id']) ||(!empty($url) && $g['baseurl'] == $url)));
+        }
+        return $nav;
     }
 
     public static function admin_action_after_save_gallery3_image()

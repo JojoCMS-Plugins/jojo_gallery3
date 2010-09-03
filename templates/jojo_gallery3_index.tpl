@@ -1,6 +1,4 @@
-﻿{if $pg_body}
-{$pg_body}
-{/if}
+{if $pagecontent}{$pagecontent}{/if}
 <div id="gallery-index">
 {foreach item=g from=$galleries}
 {if $g.numimages != 0 }

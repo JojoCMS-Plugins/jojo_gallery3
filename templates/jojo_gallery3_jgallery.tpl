@@ -2,9 +2,9 @@
 <div id="jgallery-{$galleryid}">
     <div class="jg-thumbnail-wrap">
         <ul  class="jg-thumbnails">
-        {foreach from=$images item=i}
+        {if $gallery.numimages >1}{foreach from=$images item=i}
             <li><a href="images/{if $gallery.previewsize}{$gallery.previewsize}{else}w450{/if}/gallery3/{$galleryid}/{$i.filename}" onclick= "return false;"><img id="{$i.filename}" title="{$i.caption}" src="images/{if $gallery.thumbsize}{$gallery.thumbsize}{else}s50{/if}/gallery3/{$galleryid}/{$i.filename}" alt="{$i.caption}" /></a></li>
-        {/foreach}
+        {/foreach}{/if}
         </ul>
     </div>
     <div class="jg-large">

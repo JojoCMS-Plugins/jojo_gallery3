@@ -86,6 +86,7 @@ $query = "
       `gallerycategoryid` int(11) NOT NULL auto_increment,
       `pageid` int(11) NOT NULL default '0',
       `gc_url` varchar(255) NOT NULL default '',
+      `addtonav` tinyint(1) NOT NULL default '0',
       PRIMARY KEY  (`gallerycategoryid`),
       KEY `id` (`pageid`)
     ) TYPE=MyISAM ;";
