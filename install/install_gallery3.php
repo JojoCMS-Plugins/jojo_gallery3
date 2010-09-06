@@ -87,6 +87,11 @@ $query = "
       `pageid` int(11) NOT NULL default '0',
       `gc_url` varchar(255) NOT NULL default '',
       `addtonav` tinyint(1) NOT NULL default '0',
+      `showcaptions` tinyint(1) NOT NULL default '0',
+      `showdate` tinyint(1) NOT NULL default '0',
+      `thumbnailsize` varchar(255) NOT NULL default '',
+      `imagesize` varchar(255) NOT NULL default '',
+      `indeximagesize` varchar(255) NOT NULL default '',
       PRIMARY KEY  (`gallerycategoryid`),
       KEY `id` (`pageid`)
     ) TYPE=MyISAM ;";

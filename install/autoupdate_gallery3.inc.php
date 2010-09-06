@@ -398,7 +398,27 @@ $default_fd[$table]['pageid'] = array(
         'fd_tabname' => "Content",
     );
 
-// Name Field
+// Show Captions
+$default_fd[$table]['showcaptions'] = array(
+        'fd_name' => "Show Captions",
+        'fd_type' => "yesno",
+        'fd_help' => "Show captions with thumbnails",
+        'fd_default' => "0",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+    
+// Show Date
+$default_fd[$table]['showdate'] = array(
+        'fd_name' => "Show Date",
+        'fd_type' => "yesno",
+        'fd_help' => "Show image date",
+        'fd_default' => "0",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
+// Add to Nav 
 $default_fd[$table]['addtonav'] = array(
         'fd_name' => "Show Galleries in Nav",
         'fd_type' => "yesno",
@@ -408,6 +428,39 @@ $default_fd[$table]['addtonav'] = array(
         'fd_tabname' => "Content",
     );
     
+// Thumbnail sizing Field
+$default_fd[$table]['thumbnailsize'] = array(
+        'fd_name' => "Thumbnail Size",
+        'fd_type' => "text",
+        'fd_readonly' => "0",
+        'fd_default' => "s100",
+        'fd_help' => "Gallery thumbnail sizing eg: 150x200, h200, v4000",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
+// Current image sizing Field
+$default_fd[$table]['imagesize'] = array(
+        'fd_name' => "Image Size",
+        'fd_type' => "text",
+        'fd_readonly' => "0",
+        'fd_default' => "w450",
+        'fd_help' => "Gallery current image sizing eg: 150x200, h200, v4000",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
+// Index image sizing Field
+$default_fd[$table]['indeximagesize'] = array(
+        'fd_name' => "Index Image Size",
+        'fd_type' => "text",
+        'fd_readonly' => "0",
+        'fd_default' => "s120",
+        'fd_help' => "Gallery Index thumbnail image sizing eg: 150x200, h200, v4000",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
 // Url Field (deprecated)
 $default_fd[$table]['gc_url'] = array(
         'fd_name' => "Category URL",

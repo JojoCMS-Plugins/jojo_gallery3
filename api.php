@@ -117,43 +117,10 @@ $_options[] = array(
 );
 
 $_options[] = array(
-    'id'          => 'gallery_showcaptions',
-    'category'    => 'Gallery',
-    'label'       => 'Show captions',
-    'description' => 'Show captions with the images in the gallery preview',
-    'type'        => 'radio',
-    'default'     => 'no',
-    'options'     => 'yes,no',
-    'plugin'      => 'jojo_gallery3'
-);
-
-$_options[] = array(
-  'id'          => 'gallery_showdate',
-  'category'    => 'Gallery',
-  'label'       => 'Show date on images',
-  'description' => 'Show the image date on image title, and on lightbox',
-  'type'        => 'radio',
-  'default'     => 'no',
-  'options'     => 'yes,no',
-  'plugin'      => 'jojo_gallery3'
-);
-
-$_options[] = array(
     'id'          => 'gallery_shownumimages',
     'category'    => 'Gallery',
     'label'       => 'Show gallery image count',
     'description' => 'Show the number of images in each gallery in the index',
-    'type'        => 'radio',
-    'default'     => 'no',
-    'options'     => 'yes,no',
-    'plugin'      => 'jojo_gallery3'
-);
-
-$_options[] = array(
-    'id'          => 'gallery_enable_categories',
-    'category'    => 'Gallery',
-    'label'       => 'Gallery Categories',
-    'description' => 'Allows multiple gallery collections by category under their own URLs',
     'type'        => 'radio',
     'default'     => 'no',
     'options'     => 'yes,no',

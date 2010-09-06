@@ -90,6 +90,10 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             }
             $i['image'] = count($i['keyimages']) ? $i['keyimages'][0] : (count($i['files']) ? 'gallery3/' .  $i['id'] . '/' . $i['files'][0]['filename'] :'');
             $i['numimages']     = isset($i['files']) ? count($i['files']) : 0;
+            // gallery settings override category settings
+            $i['thumbsize'] =  isset($i['thumbnailsize']) && !empty($i['thumbnailsize']) && empty($i['thumbsize']) ? $i['thumbnailsize'] : $i['thumbsize'];
+            $i['previewsize'] =  isset($i['imagesize']) && !empty($i['imagesize']) && empty($i['previewsize']) ? $i['imagesize'] : $i['previewsize'];
+            $i['indeximagesize'] =  isset($i['indeximagesize']) && !empty($i['indeximagesize']) ? $i['indeximagesize'] : $i['thumbsize'];
             $i['baseurl']          = $i['url'];
             $i['url']          = self::getUrl($i['id'], $i['url'], $i['title'], $i['language'], $i['category']);
             $i['plugin']     = 'jojo_gallery3';
@@ -269,10 +273,8 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     static function getPrefixById($id=false) {
         if ($id) {
             $data = Jojo::selectRow("SELECT category FROM {gallery3} WHERE gallery3id = ?", array($id));
-            if ($data) {
-                $prefix = self::_getPrefix($data['category']);
-                return $prefix;
-            }
+            $prefix = $data ? self::_getPrefix($data['category']) : '';
+            return $prefix;
         }
         return false;
     }
