@@ -79,7 +79,6 @@ if (isset($result['different'])) Jojo::printTableDifference($table,$result['diff
 
 /* Check for Gallery Category table */
 
-
 $table = 'gallerycategory';
 $query = "
     CREATE TABLE {gallerycategory} (
@@ -96,6 +95,9 @@ $query = "
       KEY `id` (`pageid`)
     ) TYPE=MyISAM ;";
 
+//check for conversion of categories to use pageid
+$updategcat= (boolean)(Jojo::tableExists($table) && !Jojo::fieldExists($table, 'pageid'));
+
 /* Check table structure */
 $result = Jojo::checkTable($table, $query);
 
@@ -111,6 +113,16 @@ if (isset($result['added'])) {
 }
 
 if (isset($result['different'])) Jojo::printTableDifference($table, $result['different']);
+
+//convert existing categories to use pageid if they aren't already
+if ($updategcat) {
+    $gpages = Jojo::selectAssoc("SELECT pg_url AS url, pg_url, pageid FROM {page} WHERE pg_link = 'Jojo_Plugin_Jojo_Gallery3' OR pg_link= 'jojo_plugin_jojo_gallery3'");
+    $gcats = Jojo::selectQuery("SELECT * FROM {gallerycategory}");
+    foreach ($gcats as $g) {
+         $pageid = $gpages[$g['gc_url']]['pageid'];
+        Jojo::updateQuery("UPDATE {gallerycategory} SET pageid=? WHERE gallerycategoryid = ?", array($pageid, $g['gallerycategoryid']));
+    }
+}
 
 /* Check for Gallery Image table */
 

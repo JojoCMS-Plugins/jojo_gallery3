@@ -88,6 +88,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                     }
                 }
             }
+            if (!$i['keyimages'] && count($i['files'])) $i['keyimages'][] =  'gallery3/' .  $i['id'] . '/' . $i['files'][0]['filename'];
             $i['image'] = count($i['keyimages']) ? $i['keyimages'][0] : (count($i['files']) ? 'gallery3/' .  $i['id'] . '/' . $i['files'][0]['filename'] :'');
             $i['numimages']     = isset($i['files']) ? count($i['files']) : 0;
             // gallery settings override category settings
@@ -159,8 +160,8 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         global $smarty;
         $content = array();
         
+        $language = !empty($this->page['pg_language']) ? $this->page['pg_language'] : Jojo::getOption('multilanguage-default', 'en');
         if (_MULTILANGUAGE) {
-            $language = !empty($this->page['pg_language']) ? $this->page['pg_language'] : Jojo::getOption('multilanguage-default', 'en');
             $multilangstring = Jojo::getMultiLanguageString($language, false);
             $smarty->assign('multilangstring', $multilangstring);
         }
