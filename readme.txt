@@ -20,6 +20,10 @@ Features:
 -Galleries appear in sitemap and XML sitemap
 -Galleries can be tagged, and will appear within the overall tags system
 
+Custom layout
+=============
+Set the gallery to "custom" layout. Then copy jojo_gallery3_custom.tpl to themes/yourtheme/templates/ and customize however you like.
+
 Known bugs
 ==========
 -Magazine layout2 does not work reliably in IE7, and is untested on IE6 (so let's just assume it's completely fucked in IE6).
