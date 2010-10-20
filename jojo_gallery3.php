@@ -850,7 +850,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             'primaryfields' => 'name',
             'secondaryfields' => 'name, body',
         );
-        $rawresults =  Jojo_Plugin_Jojo_search::searchPlugin($searchfields, $keywords, $language, $booleankeyword_str=false);
+        $rawresults =  Jojo_Plugin_Jojo_search::searchPlugin($searchfields, $keywords, $language, $booleankeyword_str);
         $data = $rawresults ? self::getItemsById(array_keys($rawresults), '', $clean=true) : '';
         if ($data) {
             $data= self::cleanItems($data);
