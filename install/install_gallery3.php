@@ -29,7 +29,7 @@ $query = "
         `url` varchar(255) NOT NULL default '',
         `g_date` int(11) NOT NULL default '0',
         `displayorder` int(11) NOT NULL default '0',
-        `layout` enum('square','magazine','jgallery', 'custom') default 'square',
+        `layout` enum('square','magazine','jgallery','custom') default 'square',
         `show` enum('index','filter') default 'index',
         `thumbsize` varchar(255) NOT NULL default '',
         `previewsize` varchar(255) NOT NULL default '',
