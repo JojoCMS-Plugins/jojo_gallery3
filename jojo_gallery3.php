@@ -19,7 +19,7 @@
 class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 {
 
-    public static function getGalleries($categoryid=false, $language=false, $sortby='g_date desc', $include=false) {
+    public static function getGalleries($categoryid=false, $language=false, $sortby='order', $include=false) {
         $gallerysorting = (Jojo::getOption('gallery_orderby', 'name') == 'date') ? 'g_date DESC, name' : 'name';
         $query  = "SELECT i.*, c.*, p.pageid, pg_menutitle, pg_title, pg_url, pg_status, pg_language, pg_livedate, pg_expirydate";
         $query .= " FROM {gallery3} i";
@@ -60,7 +60,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         }
         return $items;
     }
-    
+
     static function formatItems($items) {
          foreach ($items as $k=>&$i){
             $i['id']           = $i['gallery3id'];
@@ -126,6 +126,10 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         return $items;
     }
 
+    private static function filenamesort($a, $b) {
+        return strcmp($a['filename'],$b['filename']);
+    }
+
     private static function namesort($a, $b) {
          if (isset($a['name'])) {
             return strcmp($a['name'],$b['name']);
@@ -159,7 +163,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     public function _getContent() {
         global $smarty;
         $content = array();
-        
+
         $language = !empty($this->page['pg_language']) ? $this->page['pg_language'] : Jojo::getOption('multilanguage-default', 'en');
         if (_MULTILANGUAGE) {
             $multilangstring = Jojo::getMultiLanguageString($language, false);
@@ -171,7 +175,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $categorydata =  Jojo::selectRow("SELECT * FROM {gallerycategory} WHERE `pageid` = ?", array($pageid));
         $categoryid = isset($categorydata['gallerycategoryid']) ? $categorydata['gallerycategoryid'] : '';
 
-        $galleries = self::getGalleries($categoryid, (_MULTILANGUAGE ? $language : ''), '', $include='showhidden');
+        $galleries = self::getGalleries($categoryid, (_MULTILANGUAGE ? $language : ''), 'order', $include='showhidden');
 
         /* if there is only one gallery and singlepage option is set, display the gallery data instead */
         $single = false;
@@ -370,7 +374,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             foreach($files as $key => $filename) {
                 /* Image in the directory - but no record in the database */
                 if (!isset($dbrows[$filename])) {
-                    $exif = exif_read_data(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename);
+                    $exif = Jojo::getFileExtension($filename)=='jpg' ? exif_read_data(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename): array();
                     $timestamp = time();
                     if (isset($exif['DateTime'])) {
                         $datetime = explode(' ', $exif['DateTime']);
@@ -446,7 +450,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 
     public static function admin_action_start()
     {
-        if (isset($_POST['gallery3submit'])) {
+        if (isset($_POST['gallery3submit']) && isset($_POST['gallery3id'])) {
             $galleryid = $_POST['gallery3id'];
             foreach (Jojo::listPlugins('actions/gallery3-upload-image.php') as $pluginfile) {
                 require_once($pluginfile);
@@ -470,7 +474,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         return $items;
     }
 
-    static function getNavItems($pageid, $selected=false) 
+    static function getNavItems($pageid, $selected=false)
     {
         $nav = array();
         $gallerypages = self::getPluginPages('', '', $pageid);
@@ -555,7 +559,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                 0,  // Parent - don't do anything smart, just put it at the top level for now
                 'hidden' // hide new page so it doesn't show up on the live site until it's been given a proper title and url
             )
-        );        
+        );
         // If we successfully added the page, update the category with the new pageid
         if ($newpageid) {
             jojo::updateQuery(
@@ -580,7 +584,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
            $pageid = $page['pageid'];
         }
         // no category for this page id
-        if (!count($categories) || !isset($categories[$pageid])) { 
+        if (!count($categories) || !isset($categories[$pageid])) {
             jojo::insertQuery("INSERT INTO {gallerycategory} (pageid) VALUES ('$pageid')");
         }
         return true;
@@ -689,7 +693,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         if ($sort == 1) rsort($files, SORT_STRING);
         else sort($files, SORT_STRING);
         return $files;
-    }    
+    }
 
     /**
      * Sitemap filter
@@ -865,7 +869,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         /* Return results */
         return $results;
     }
-    
+
     /*
     * Tags
     */
