@@ -40,18 +40,18 @@ if (!count($data)) {
 $data = Jojo::selectRow("SELECT pageid FROM {page}  WHERE pg_url='admin/edit/gallery3'");
 $gallery3pageid = $data['pageid'];
 
-/* Edit Gallery Categories */
-$data = Jojo::selectQuery("SELECT * FROM {page}  WHERE pg_url='admin/edit/gallerycategory'");
-if (!count($data)) {
-    echo "jojo_gallery3: Adding <b>Gallery Categories</b> Page to Edit Content menu<br />";
-    Jojo::insertQuery("INSERT INTO {page} SET pg_title='Gallery Categories', pg_link='Jojo_Plugin_Admin_Edit', pg_url='admin/edit/gallerycategory', pg_parent=?, pg_order=5", array($gallery3pageid));
-}
-
 /* Edit Gallery Image Data */
 $data = Jojo::selectQuery("SELECT * FROM {page}  WHERE pg_url='admin/edit/gallery3_image'");
 if (!count($data)) {
-    echo "jojo_gallery3: Adding <b>Edit Gallery Image Data</b> Page to Edit Content menu<br />";
-    Jojo::insertQuery("INSERT INTO {page} SET pg_title='Gallery Image Data', pg_link='Jojo_Plugin_Admin_Edit', pg_url='admin/edit/gallery3_image', pg_parent=?, pg_order=6", array($gallery3pageid));
+    echo "jojo_gallery3: Adding <b>Edit Gallery Images</b> Page to Edit Content menu<br />";
+    Jojo::insertQuery("INSERT INTO {page} SET pg_title='Gallery Images', pg_link='Jojo_Plugin_Admin_Edit', pg_url='admin/edit/gallery3_image', pg_parent=?, pg_order=1", array($gallery3pageid));
+}
+
+/* Edit Gallery Categories */
+$data = Jojo::selectQuery("SELECT * FROM {page}  WHERE pg_url='admin/edit/gallerycategory'");
+if (!count($data)) {
+    echo "jojo_gallery3: Adding <b>Gallery Page Options</b> Page to Content menu<br />";
+    Jojo::insertQuery("INSERT INTO {page} SET pg_title='Gallery Page Options', pg_link='Jojo_Plugin_Admin_Edit', pg_url='admin/edit/gallerycategory', pg_parent=?, pg_order=2", array($gallery3pageid));
 }
 
 /* Ensure there is a folder for uploading gallery images */

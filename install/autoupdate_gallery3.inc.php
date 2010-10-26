@@ -398,6 +398,16 @@ $default_fd[$table]['pageid'] = array(
         'fd_tabname' => "Content",
     );
 
+// Gallery Order by Field
+$default_fd[$table]['sortby'] = array(
+        'fd_name' => "Sort Galleries by",
+        'fd_type' => "radio",
+        'fd_options' => "date:Date\nname:Name\norder:Display order",
+        'fd_default' => "order",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
 // Show Captions
 $default_fd[$table]['showcaptions'] = array(
         'fd_name' => "Show Captions",

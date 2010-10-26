@@ -85,6 +85,7 @@ $query = "
       `gallerycategoryid` int(11) NOT NULL auto_increment,
       `pageid` int(11) NOT NULL default '0',
       `gc_url` varchar(255) NOT NULL default '',
+      `sortby` enum('date','name','order') NOT NULL default 'order',
       `addtonav` tinyint(1) NOT NULL default '0',
       `showcaptions` tinyint(1) NOT NULL default '0',
       `showdate` tinyint(1) NOT NULL default '0',

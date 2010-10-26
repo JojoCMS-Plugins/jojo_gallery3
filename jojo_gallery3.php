@@ -19,8 +19,7 @@
 class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 {
 
-    public static function getGalleries($categoryid=false, $language=false, $sortby='order', $include=false) {
-        $gallerysorting = (Jojo::getOption('gallery_orderby', 'name') == 'date') ? 'g_date DESC, name' : 'name';
+    public static function getGalleries($categoryid=false, $language=false, $sortby=false, $include=false) {
         $query  = "SELECT i.*, c.*, p.pageid, pg_menutitle, pg_title, pg_url, pg_status, pg_language, pg_livedate, pg_expirydate";
         $query .= " FROM {gallery3} i";
         $query .= " LEFT JOIN {gallerycategory} c ON (i.category=c.gallerycategoryid) LEFT JOIN {page} p ON (c.pageid=p.pageid)";
@@ -28,18 +27,20 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $query .= $categoryid && $categoryid != 'all' ? " AND category = '$categoryid'" : ' AND category != 0';
         $query .= $categoryid == 'all' && $language && $language != 'alllanguages' ? " AND (`language` = '$language')" : '';
         $galleries = Jojo::selectQuery($query);
+        $sortby = !$sortby && isset($galleries[0]['sortby']) ? $galleries[0]['sortby'] : $sortby;
         $galleries = self::cleanItems($galleries, '', $include);
         $galleries = self::formatItems($galleries);
         $galleries =  self::sortItems($galleries, $sortby);
         return $galleries;
     }
 
-    static function getItemsById($ids = false, $sortby='g_date desc', $clean=true) {
+    static function getItemsById($ids = false, $sortby=false, $clean=true) {
         $query  = "SELECT i.*, c.*, p.pageid, pg_menutitle, pg_title, pg_url, pg_status, pg_language, pg_livedate, pg_expirydate";
         $query .= " FROM {gallery3} i";
         $query .= " LEFT JOIN {gallerycategory} c ON (i.category=c.gallerycategoryid) LEFT JOIN {page} p ON (c.pageid=p.pageid)";
         $query .=  is_array($ids) ? " WHERE gallery3id IN ('". implode("',' ", $ids) . "')" : " WHERE gallery3id=$ids";
         $items = Jojo::selectQuery($query);
+        $sortby = !$sortby && isset($items[0]['sortby']) ? $items[0]['sortby'] : $sortby;
         $items = $clean ? self::cleanItems($items) : $items;
         $items = self::formatItems($items);
         $items = is_array($ids) ? self::sortItems($items, $sortby) : $items[0];
@@ -109,11 +110,11 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $order = "date";
             $reverse = false;
             switch ($sortby) {
-              case "g_date desc":
+              case "date":
                 $order="date";
                 $reverse = true;
                 break;
-              case "ar_title asc":
+              case "name":
                 $order="name";
                 break;
               case "order":
@@ -174,8 +175,8 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $pageid = $this->page['pageid'];
         $categorydata =  Jojo::selectRow("SELECT * FROM {gallerycategory} WHERE `pageid` = ?", array($pageid));
         $categoryid = isset($categorydata['gallerycategoryid']) ? $categorydata['gallerycategoryid'] : '';
-
-        $galleries = self::getGalleries($categoryid, (_MULTILANGUAGE ? $language : ''), 'order', $include='showhidden');
+        $sortby = isset($categorydata['sortby']) ? $categorydata['sortby'] : 'order';
+        $galleries = self::getGalleries($categoryid, (_MULTILANGUAGE ? $language : ''), $sortby, $include='showhidden');
 
         /* if there is only one gallery and singlepage option is set, display the gallery data instead */
         $single = false;

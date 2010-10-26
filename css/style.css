@@ -57,7 +57,7 @@ div.mag a:hover img {
 	clear:both;
 }
 
-#content div.jgallery .jg-thumbnails li {
+#content div.jgallery ul.jg-thumbnails li {
 	float: left;
 	margin: 0;
 	list-style: none;
