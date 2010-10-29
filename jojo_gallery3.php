@@ -503,15 +503,19 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $galleryid = $_POST['fm_gallery3id'];
             $filename = (isset($_FILES['fm_FILE_filename']['name']) && !empty($_FILES['fm_FILE_filename']['name'])) ? $_FILES['fm_FILE_filename']['name'] : $_POST['fm_filename'];
             $timestamp = (isset($_POST['fm_gi_date']) && !empty($_POST['fm_gi_date'])) ? $_POST['fm_gi_date'] : '';
+            var_dump($timestamp);
             if (empty($timestamp) || $timestamp=='n/a') {
             // no timestamp submitted in the form - use the exif data if available, otherwise set to now
                 $exif = exif_read_data(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename);
+            var_dump($exif);
                 $etimestamp = 0;
                 if (isset($exif['DateTime'])) {
                     $datetime = explode(' ', $exif['DateTime']);
                     $date = explode(':', $datetime[0]);
                     $time = explode(':', $datetime[1]);
                     $etimestamp = mktime($time[0], $time[1], $time[2], $date[1], $date[2], $date[0]);
+                } elseif (isset($exif['FileDateTime'])) {
+                    $etimestamp = $exif['FileDateTime'];
                 }
                 $timestamp = $etimestamp ? $etimestamp : time();
                 if ( isset($_POST['fm_gallery3_imageid']) && !empty($_POST['fm_gallery3_imageid']) ) {
