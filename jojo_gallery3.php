@@ -66,6 +66,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
          foreach ($items as $k=>&$i){
             $i['id']           = $i['gallery3id'];
             $i['title']        = htmlspecialchars($i['name'], ENT_COMPAT, 'UTF-8', false);
+            $i['menutitle']  = isset($i['menutitle']) && !empty($i['menutitle']) ? htmlspecialchars($i['menutitle'], ENT_COMPAT, 'UTF-8', false) : $i['title'];
             // Snip for the index description
             $i['bodyplain'] = array_shift(Jojo::iExplode('[[snip]]', $i['body']));
             /* Strip all tags and template include code ie [[ ]] */
@@ -460,7 +461,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     static function getPluginPages($for='', $section=0)
     {
         global $sectiondata;
-        $items =  Jojo::selectQuery("SELECT c.*, p.*  FROM {gallerycategory} c LEFT JOIN {page} p ON (c.pageid=p.pageid) ORDER BY pg_parent, pg_order");
+        $items =  Jojo::selectAssoc("SELECT p.pageid AS id, c.*, p.*  FROM {gallerycategory} c LEFT JOIN {page} p ON (c.pageid=p.pageid) ORDER BY pg_parent, pg_order");
         // use core function to clean out any pages based on permission, status, expiry etc
         $items =  Jojo_Plugin_Core::cleanItems($items, $for);
         foreach ($items as $k=>$i){
@@ -478,8 +479,8 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $section = Jojo::getSectionRoot($pageid);
         $gallerypages = self::getPluginPages('', $section);
         if (!$gallerypages) return $nav;
-        $categoryid = $gallerypages[0]['gallerycategoryid'];
-        $galleries = isset($gallerypages[0]['addtonav']) && $gallerypages[0]['addtonav'] ? self::getGalleries($categoryid) : '';
+        $categoryid = $gallerypages[$pageid]['gallerycategoryid'];
+        $galleries = isset($gallerypages[$pageid]['addtonav']) && $gallerypages[$pageid]['addtonav'] ? self::getGalleries($categoryid) : '';
         if (!$galleries) return $nav;
         //if the gallery index is currently selected, check to see if a gallery has been called
         if ($selected) {
@@ -489,7 +490,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         foreach ($galleries as $g) {
             $nav[$g['id']]['url'] = $g['url'];
             $nav[$g['id']]['title'] = $g['title'];
-            $nav[$g['id']]['label'] = $g['title'];
+            $nav[$g['id']]['label'] = $g['menutitle'];
             $nav[$g['id']]['selected'] = (boolean)($selected && (($id && $id== $g['id']) ||(!empty($url) && $g['baseurl'] == $url)));
         }
         return $nav;

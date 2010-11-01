@@ -75,6 +75,17 @@ $default_fd['gallery3']['seotitle'] = array(
         'fd_tabname' => "Content",
     );
 
+// Menu Title Field
+$default_fd['gallery3']['menutitle'] = array(
+        'fd_name' => "Short Title",
+        'fd_type' => "text",
+        'fd_help' => "Short title to use (optionally) in navigation, sitemap etc",
+        'fd_options' => "70",
+        'fd_size' => "50",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
 // Bodycode Field
 $default_fd['gallery3']['bodycode'] = array(
         'fd_name' => "Bodycode",
