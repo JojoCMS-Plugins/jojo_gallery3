@@ -335,7 +335,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     }
 
      public static function customhead() {
-        return '<script type="text/javascript" src="'._PROTOCOL.$_SERVER['HTTP_HOST'].'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n".'<link rel="stylesheet" type="text/css" href="'._PROTOCOL.$_SERVER['HTTP_HOST'].'/external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />';
+        return '<script type="text/javascript" src="'._SITEURL.'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n".'<link rel="stylesheet" type="text/css" href="'._SITEURL.'/external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />';
     }
 
     public static function getImages($galleryid, $refresh=false, $sort="imageid") {
