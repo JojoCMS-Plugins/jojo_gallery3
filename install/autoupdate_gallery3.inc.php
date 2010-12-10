@@ -36,7 +36,7 @@ $o = 1;
 
 // Gallery3id Field
 $default_fd['gallery3']['gallery3id'] = array(
-        'fd_name' => "Gallery3id",
+        'fd_name' => "ID",
         'fd_type' => "readonly",
         'fd_help' => "A unique ID, automatically assigned by the system",
         'fd_order' => $o++,
