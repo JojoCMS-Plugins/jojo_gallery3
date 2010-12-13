@@ -33,6 +33,7 @@ Jojo::addHook('admin_action_start', 'admin_action_start', 'jojo_gallery3');
 Jojo::addHook('admin_action_after_save_page', 'admin_action_after_save_page', 'jojo_gallery3');
 Jojo::addHook('admin_action_after_save_gallerycategory', 'admin_action_after_save_gallerycategory', 'jojo_gallery3');
 Jojo::addHook('admin_action_after_save_gallery3_image', 'admin_action_after_save_gallery3_image', 'jojo_gallery3');
+Jojo::addHook('admin_action_after_save_gallery3', 'admin_action_after_save_gallery3', 'jojo_gallery3');
 
 /* add lightbox javascript to head */
 Jojo::addHook('customhead', 'customhead', 'jojo_gallery3');

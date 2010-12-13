@@ -27,7 +27,7 @@ if (!$page->perms->hasPerm($_USERGROUPS, 'view')) {
 }
 */
 
-
+exit; //I don't think this code is required any longer.
 
 $frajax = new frajax();
 $frajax->title = 'Upload Image - ' . _SITETITLE;

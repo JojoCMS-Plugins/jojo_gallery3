@@ -7,8 +7,8 @@
     <input name="MAX_FILE_SIZE" value="2000000" type="hidden" />
     <input name="uploadimage" id="uploadimage" type="file" />
   </div>
-  <input type="submit" name="gallery3submit" value="Upload" />{else}You must save this new gallery before you can upload images{/if}
-</form>
+  {else}You must save this new gallery before you can upload images{/if}
+{*</form>*}
 </div>
 
 <div id="files">
