@@ -29,7 +29,7 @@ if (Jojo::getOption('gallery_randomimage', 'no') == 'yes') {
         $id = $g['id'];
         $gurl = $g['url'];
         $gname = $g['name'];
-        $images = Jojo_Plugin_Jojo_gallery3::getImages($id);
+        $images = $g['files'];
         if ($images) {
             shuffle($images);
             $image = array_pop($images);
@@ -47,7 +47,8 @@ if (Jojo::getOption('gallery_randomimage', 'no') == 'yes') {
 
     if (isset($randomgalleryimages[0])) {
         $smarty->assign('randomgalleryimage', array($randomgalleryimages[0]));
-    }
+        $smarty->assign('randomgallery', $allgalleries[0]);
+   }
     if (isset($randomgalleryimages[1])) {
         $smarty->assign('randomgalleryimage2', array($randomgalleryimages[1]));
     }
