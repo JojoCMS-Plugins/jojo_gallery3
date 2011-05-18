@@ -410,6 +410,17 @@ $default_fd[$table]['pageid'] = array(
         'fd_tabname' => "Content",
     );
 
+// Type Field
+$default_fd[$table]['type'] = array(
+        'fd_name' => "Type",
+        'fd_type' => "radio",
+        'fd_options' => "normal:Normal\nparent:Parent\nindex:All Articles",
+        'fd_readonly' => "0",
+        'fd_default' => "normal",
+        'fd_order' => $o++,
+        'fd_tabname' => "Content",
+    );
+
 // Gallery Order by Field
 $default_fd[$table]['sortby'] = array(
         'fd_name' => "Sort Galleries by",

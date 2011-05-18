@@ -20,12 +20,23 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 {
 
     public static function getGalleries($categoryid=false, $language=false, $sortby=false, $include=false) {
+        global $page;
+        if ($categoryid == 'all' && $include != 'alllanguages') {
+            $categoryid = array();
+            $sectionpages = self::getPluginPages('', $page->page['root']);
+            foreach ($sectionpages as $s) {
+                $categoryid[] = $s['gallerycategoryid'];
+            }
+        }
+        if (is_array($categoryid)) {
+             $categoryquery = " AND category IN ('" . implode("','", $categoryid) . "')";
+        } else {
+            $categoryquery = is_numeric($categoryid) ? " AND category = '$categoryid'" : '';
+        }
         $query  = "SELECT i.*, c.*, p.pageid, pg_menutitle, pg_title, pg_url, pg_status, pg_language, pg_livedate, pg_expirydate";
         $query .= " FROM {gallery3} i";
         $query .= " LEFT JOIN {gallerycategory} c ON (i.category=c.gallerycategoryid) LEFT JOIN {page} p ON (c.pageid=p.pageid)";
-        $query .= " WHERE 1";
-        $query .= $categoryid && $categoryid != 'all' ? " AND category = '$categoryid'" : ' AND category != 0';
-        $query .= $categoryid == 'all' && $language && $language != 'alllanguages' ? " AND (`language` = '$language')" : '';
+        $query .= " WHERE 1" . $categoryquery;
         $galleries = Jojo::selectQuery($query);
         $sortby = !$sortby && isset($galleries[0]['sortby']) ? $galleries[0]['sortby'] : $sortby;
         $galleries = self::cleanItems($galleries, '', $include);
@@ -125,7 +136,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             usort($items, array('Jojo_Plugin_Jojo_gallery3', $order . 'sort'));
             $items = $reverse ? array_reverse($items) : $items;
         }
-        return $items;
+        return array_values($items);
     }
 
     private static function filenamesort($a, $b) {
@@ -170,9 +181,21 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $smarty->assign('multilangstring', $pageprefix);
         $id = Jojo::getFormData('id',        0);
         $url       = Jojo::getFormData('url',      '');
-        $categorydata =  Jojo::selectRow("SELECT * FROM {gallerycategory} WHERE `pageid` = ?", array($pageid));
-        $categoryid = isset($categorydata['gallerycategoryid']) ? $categorydata['gallerycategoryid'] : '';
-        $sortby = isset($categorydata['sortby']) ? $categorydata['sortby'] : 'order';
+        $categorydata =  Jojo::selectRow("SELECT * FROM {gallerycategory} WHERE pageid = ?", $pageid);
+        $categorydata['type'] = isset($categorydata['type']) ? $categorydata['type'] : 'normal';
+        if ($categorydata['type']=='index') {
+            $categoryid = 'all';
+        } elseif ($categorydata['type']=='parent') {
+            $childcategories = Jojo::selectQuery("SELECT gallerycategoryid FROM {page} p  LEFT JOIN {gallerycategory} c ON (c.pageid=p.pageid) WHERE pg_parent = ? AND pg_link = 'jojo_plugin_jojo_gallery3'", $pageid);
+            foreach ($childcategories as $c) {
+                $categoryid[] = $c['gallerycategoryid'];
+            }
+            $categoryid[] = $categorydata['gallerycategoryid'];
+        } else {
+            $categoryid = $categorydata['gallerycategoryid'];
+        }
+        $sortby = $categorydata ? $categorydata['sortby'] : 'order';
+
         $galleries = self::getGalleries($categoryid, '', $sortby, $include='showhidden');
 
         /* if there is only one gallery and singlepage option is set, display the gallery data instead */
@@ -335,7 +358,14 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     }
 
      public static function customhead() {
-        return '<script type="text/javascript" src="'._SITEURL.'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n".'<link rel="stylesheet" type="text/css" href="'._SITEURL.'/external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />';
+        return '<link rel="stylesheet" type="text/css" href="'._SITEURL.'/external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />'."\n"
+        . '<link rel="stylesheet" type="text/css" href="' . _SITEURL . '/external/colorbox/colorbox.css" media="screen" />';
+    }
+
+     public static function foot() {
+        return '<script type="text/javascript" src="'._SITEURL.'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n"
+                . '<script type="text/javascript" src="' . _SITEURL . '/external/colorbox/jquery.colorbox-min.js"></script>' . "\n";
+
     }
 
     public static function getImages($galleryid, $refresh=false, $sort="imageid") {

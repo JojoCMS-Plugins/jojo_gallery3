@@ -35,8 +35,11 @@ Jojo::addHook('admin_action_after_save_gallerycategory', 'admin_action_after_sav
 Jojo::addHook('admin_action_after_save_gallery3_image', 'admin_action_after_save_gallery3_image', 'jojo_gallery3');
 Jojo::addHook('admin_action_after_save_gallery3', 'admin_action_after_save_gallery3', 'jojo_gallery3');
 
-/* add lightbox javascript to head */
+/* add lightbox css to head */
 Jojo::addHook('customhead', 'customhead', 'jojo_gallery3');
+
+/* add lightbox javascript to foot */
+Jojo::addHook('foot', 'foot', 'jojo_gallery3');
 
 /* add a new field type */
 $_provides['fieldTypes'] = array('gallery3images' => 'Gallery3 images', 'gallery3image' => 'Gallery3 display image', 'dblist_g3' => 'Gallery3 images gallery list');

@@ -85,6 +85,7 @@ $query = "
     CREATE TABLE {gallerycategory} (
       `gallerycategoryid` int(11) NOT NULL auto_increment,
       `pageid` int(11) NOT NULL default '0',
+      `type` enum('normal','parent','index') NOT NULL default 'normal',
       `gc_url` varchar(255) NOT NULL default '',
       `sortby` enum('date','name','order') NOT NULL default 'order',
       `addtonav` tinyint(1) NOT NULL default '0',
