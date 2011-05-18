@@ -358,13 +358,11 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     }
 
      public static function customhead() {
-        return '<link rel="stylesheet" type="text/css" href="'._SITEURL.'/external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />'."\n"
-        . '<link rel="stylesheet" type="text/css" href="' . _SITEURL . '/external/colorbox/colorbox.css" media="screen" />';
+        return '<link rel="stylesheet" type="text/css" href="'._SITEURL.'/external/jquery-lightbox/css/jquery.lightbox-0.4.css" media="screen" />'."\n";
     }
 
      public static function foot() {
-        return '<script type="text/javascript" src="'._SITEURL.'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n"
-                . '<script type="text/javascript" src="' . _SITEURL . '/external/colorbox/jquery.colorbox-min.js"></script>' . "\n";
+        return '<script type="text/javascript" src="'._SITEURL.'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n";
 
     }
 
