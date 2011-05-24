@@ -400,7 +400,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             foreach($files as $key => $filename) {
                 /* Image in the directory - but no record in the database */
                 if (!isset($dbrows[$filename])) {
-                    $exif = Jojo::getFileExtension($filename)=='jpg' ? exif_read_data(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename): array();
+                    $exif = (function_exists('exif_read_data') && Jojo::getFileExtension($filename)=='jpg') ? exif_read_data(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename): array();
                     $timestamp = time();
                     if (isset($exif['DateTime'])) {
                         $datetime = explode(' ', $exif['DateTime']);
@@ -532,7 +532,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $timestamp = (isset($_POST['fm_gi_date']) && !empty($_POST['fm_gi_date'])) ? $_POST['fm_gi_date'] : '';
             if (empty($timestamp) || $timestamp=='n/a') {
             // no timestamp submitted in the form - use the exif data if available, otherwise set to now
-                $exif = exif_read_data(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename);
+                $exif = (function_exists('exif_read_data')) ? exif_read_data(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename) : array();
                 $etimestamp = 0;
                 if (isset($exif['DateTime'])) {
                     $datetime = explode(' ', $exif['DateTime']);
