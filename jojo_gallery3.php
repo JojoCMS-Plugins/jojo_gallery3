@@ -748,7 +748,9 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $smarty->assign('mag', $mag->output());
             return $smarty->fetch('jojo_gallery3_magazine2.tpl');
         } elseif ($layout == 'custom') {
-            return $smarty->fetch('jojo_gallery3_custom.tpl');
+            $html = $smarty->fetch('jojo_gallery3_custom.tpl');
+            $html = Jojo::applyFilter('jojo_gallery3_custom', $html);
+            return $html;
         } else {
             return $smarty->fetch('jojo_gallery3_square.tpl');
         }
