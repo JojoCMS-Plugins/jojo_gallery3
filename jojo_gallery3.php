@@ -731,12 +731,12 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         if ($layout == 'jgallery') {
             return $smarty->fetch('jojo_gallery3_jgallery.tpl');
 
-        } elseif ($layout == 'magazine2' || $layout == 'magazine') {
+        } elseif ($layout == 'magazine2' ) {
             foreach (Jojo::listPlugins('external/magazine2/magazinelayout2.class.php') as $pluginfile) {
                 require_once($pluginfile);
                 break;
             }
-            $mag = new magazineLayout2('400',1);
+            $mag = new magazineLayout2(Jojo::getOption('gallery_magazinelayoutwidth'),1);
             $mag->template    = '<img src="images/[width]x[height]/[image]" alt="[alt]" title="[title]" width="[width]" height="[height]" />';
             $mag->square      = true;
             $mag->orientation = 'right';
@@ -747,6 +747,18 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             }
             $smarty->assign('mag', $mag->output());
             return $smarty->fetch('jojo_gallery3_magazine2.tpl');
+        } elseif ($layout == 'magazine') {
+            foreach (Jojo::listPlugins('external/magazine-layout/magazinelayout.class.php') as $pluginfile) {
+                require_once($pluginfile);
+                break;
+            }
+            $mag = new magazinelayout(Jojo::getOption('gallery_magazinelayoutwidth'),1,'<img src="images/[size]/[image]" alt="[alt]" title="[title]" width="[width]" height="[height]" />');
+            $max = min(8, count($gallery['files'])); //the magazine script only supports 8 images at present
+            for ($i=0;$i<$max;$i++) {
+                $mag->addImage(_DOWNLOADDIR.'/gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename'], 'gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename']);
+            }
+            $smarty->assign('mag', $mag->getHtml());
+            return $smarty->fetch('jojo_gallery3_magazine.tpl');    
         } elseif ($layout == 'custom') {
             $html = $smarty->fetch('jojo_gallery3_custom.tpl');
             $html = Jojo::applyFilter('jojo_gallery3_custom', $html, array($galleryid, $gallery));

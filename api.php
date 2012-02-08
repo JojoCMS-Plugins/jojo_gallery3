@@ -141,3 +141,14 @@ $_options[] = array(
     'options'     => 'yes,no',
     'plugin'      => 'jojo_gallery3'
 );
+
+$_options[] = array(
+    'id'          => 'gallery_magazinelayoutwidth',
+    'category'    => 'Gallery',
+    'label'       => 'Width for magazinelayout',
+    'description' => 'Set the width of the magazine layouts in pixels',
+    'type'        => 'integer',
+    'default'     => '400',
+    'options'     => '',
+    'plugin'      => 'jojo_gallery3'
+);

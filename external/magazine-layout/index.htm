@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>Magazine Layout Example</title>
+<link type="text/css" rel="StyleSheet" href="style.css" />
+</head>
+<body>
+
+<h1>Magazine Layouts</h1>
+<p>Auto resized images are a common feature on the web now. Automating the process of resizing images saves a lot of time, certainly quicker than manually resizing images in photoshop, and is a good way to manage images on a site. But when a designer crops and uploads your images manually, it always looks better. Designers have an eye for detail, straight lines and how to position graphics on a page.</p>
+
+<p>The problem with automatic uploads is particularly evident when several images of completely different dimensions are displayed together on a page, such as 4 product images that have been uploaded through a CMS (content management system). Finding an attractive way of displaying any 2, 3 or 4 images together (regardless of shape and size) has always been difficult without manually resizing or cropping.<br />
+This article covers a PHP based technique for automatically resizing and more importantly positioning 2 - 8 images in what I call a "magazine style" fashion (Images in a magazine are always carefully placed - usually one image takes pride of place, and several smaller images surround it).<br />
+See <a href="example1.htm">Example 1</a> showing the final output of this technique. The only information we need to supply to the script is the width of the container, and the filenames of each image. Amazingly, everything else can be calculated.</p>
+
+<h3>Different Dimensions</h3>
+
+<p>Consider the following 3 images of different sizes and dimensions, which could have been uploaded via a CMS...</p>
+
+<img src="originals.gif" alt="3 user uploaded images, all different dimensions" /><br />
+<em>Above: 3 user uploaded images, all different dimensions</em>
+
+<p>In their current shape, these images are unlikely to look attractive. A more desireable layout is shown below</p>
+
+<img src="repositioned.gif" alt="The same 3 images, resized and positioned correctly" /><br />
+<em>Above: The same 3 images, resized and positioned correctly</em>
+
+<p>Anyone with an image editing program such as photoshop can achieve this effect very quickly, but it needs to be done manually.<br />
+This article covers usage of some server side PHP scripting and some rather complicated algebra to achieve the same effect, no manual tweaking involved.</p>
+
+
+<h3>The Solution</h3>
+
+<p>Using PHP to resize the images on the server, we are able to calculate the exact size that each image should be so they will fit together in a nice square box. This will maintain aspect ratios, work with any proportion image (almost) and all the dirty work is done on the server. Square images are no problem either (see <a href="example2.htm">Example 2</a>).</p>
+
+
+<h3>Getting Started</h3>
+
+<p>First things first, you will need a PHP web host that has the GD2.x extension enabled. Fortunately, this is quite common these days.<br />
+You will also need a good image resizing script. I have included a basic script here, but it’s always a good idea to use a script that caches the output, as dynamic images can really slow down your server. Copy the supplied class file to your web server, and note the location.</p>
+
+<p>Create a basic script as follows…</p>
+
+<div>
+//include the class file<br />
+require_once('magazinelayout.class.php');<br />
+<br />
+//Define the width for the output area (pixels)<br />
+$width = 600;<br />
+<br />
+//Define padding around each image - this *must* be included in your stylesheet (pixels)<br />
+$padding = 3;<br />
+<br />
+//Define your template for outputting images<br />
+$template = "&lt;img src=\"image.php?size=[size]&amp;amp;file=[image]\" alt=\"\" /&gt;"; //Don't forget to escape the &amp;<br />
+<br />
+//create a new instance of the class<br />
+$mag = new magazinelayout($width,$padding,$template);<br />
+<br />
+//Add the images in any order<br />
+$mag->addImage('landscape1.jpg');<br />
+$mag->addImage('portrait1.jpg');<br />
+$mag->addImage('landscape2.jpg');<br />
+<br />
+//display the output<br />
+echo $mag->getHtml();<br />
+</div>
+
+<p>That’s it. Running the script should display 3 images in a nice looking fashion, the exact layout determined by whether the images are landscape or portrait.</p>
+
+<h3>How does it work?</h3>
+
+<p>The above code is basic Object Oriented PHP. It sets up a new class, adds some images into an array, and processes them. The magic lies in the getHtml() function. Let’s take a look.</p>
+
+<h3>Getting Image Ratios</h3>
+<p>As images are added, we detect whether they are landscape or portrait using PHP’s getimagesize function. This gives us the height and width of the image, which we use to find a ratio of width : height. This function is known to be quite processor intensive, but it can’t be avoided.</p>
+
+<p>We don’t need to know the height and width, but the ratios are used later on, so they are saved to an array. At this point, we also decide whether we are dealing with landscape or portrait images, as this determines which template the script will use.
+The template above is based on 2 landscape images and one portrait.</p>
+
+<h3>Calculating sizes</h3>
+
+<p>Our goal is to get the 3 images to look right within an overall  fixed width –  the overall height will vary depending on the image dimensions.<br />
+The complicated part of all this is figuring out the right size for each image. If this was done in photoshop, it would involve stretching and shaping each image until it “looked right”, as every change will upset the balance of the other images.<br />
+My first attempt at this script wasn’t too different to this. It started a counter at 1 and tried every size up to 500px until it found a working combination. The sound of my processor fan convinced me there had to be a better way.</p>
+
+<h3>Algebra</h3>
+
+<p>It turns out my problem can be solved using algebra. Something I spent a lot of time learning at university, but never managed to find a practical application for. 10 years on, it's coming into use for the first time.</p>
+
+<div>
+<strong>Certain parts of our equation we know.</strong><br />
+<strong>t</strong> = Total width – The total width of all images specified when the class is called.<br />
+<strong>r1, r2, r3</strong> = Ratios – We have already calculated the ratios of each image based on the width and height.<br />
+
+<strong>What we don’t know...</strong><br />
+<strong>w1</strong>  - The width of the left column – one required piece of information.<br />
+<strong>w2</strong> – The width of the right portrait image, also required.<br />
+
+</div>
+
+<p>The following diagram shows the values we know and those we don't. Known values have a tick, unknown have a question mark.</p>
+
+<img src="properties.gif" alt="Our equation values explained" /><br /><br />
+<em>Our equation values explained</em>
+
+
+<p>Given these widths, our image script can figure out the heights because we already know the aspect ratio of each image. If we can use Algebra to find w1 and w2, we have all we need.</p>
+
+<div>
+<h3>What we also know</h3><br />
+We also know that the height of the portrait image is equal to the combined height of the 2 landscape images, expressed as...<br />
+<strong>h1 = h2 + h3</strong><br />
+And we know that the same height is also equal to the portrait image’s width divided by it’s ratio.<br />
+<strong>h1 = w2 / r1</strong><br />
+We also know the height of the landscape images is their width divided by their ratio.<br />
+<strong>h2 = w1 / r2</strong><br />
+<strong>h3 = w1 / r3</strong><br />
+</div>
+
+<p>After some rearranging of elements, I am starting to put everything into one equation, with the goal of finding w1.
+A trip to the <a href="http://www.quickmath.com/">Quickmath calculator</a> gives me the result I need.</p>
+
+<strong>W1 = t / (r1 * (1/r2 + 1/r3 + 1/r4) +1)</strong>
+
+<h3>Some padding please</h3>
+<p>At this point, it became apparent that the first designer to look at the output would be wanting some padding between the images. This is not as simple as adding a few pixels onto each image, because the left hand side is going to have more padding overall than the right which will throw the formatting. <a href="example3.htm">Example 3</a> shows the layout without any padding.<br />
+With a little help from the calculator, I arrived at the following equations</p>
+
+
+<img src="equation.gif" alt="The formula for one of the layouts" /><br /><br />
+<em>Things are starting to look a little more complicated here, but this does work.</em>
+
+<h3>Enough Maths, back to PHP</h3>
+
+<p>This was never meant to be a lesson in mathematics, however we now have enough information to plug back into our PHP script. By replacing the algebra variables with PHP variables, we have a formula for finding the information we are missing.<br />
+Given the ratios of the images and the overall container width, we can calculate the width of all images, enough for the image resizing script to do it's job.
+
+
+<h3>CSS</h3>
+<p>Because we don't use tables anymore for positioning, I had to find a way of making the layout look good using CSS. Because we are dealing with squares, this is quite straightforward using the images in a floated div.<br />
+All was working well until I tried the version with padding between the images in IE. Because IE handles padding differently to other browsers, it was offsetting the images by a few pixels and ruining the effect.<br />
+This can be worked around by placing the image inside a container div, and applying margin to the image. This will force the container to the right size, which gives the much needed effect of padding between the images. Default CSS is as follows.</p>
+<div>
+.magazine-image {<br />
+ background: #fff;<br />
+ border: 1px #eee solid;<br />
+}<br />
+.magazine-image img {<br />
+ padding: 0px;<br />
+ background: #fff;<br />
+ margin: 2px;<br />
+ border: 1px #eee solid;<br />
+}
+</div>
+
+<h3>Different layouts</h3>
+
+<p>The script contains 6 different layouts which are based on different formulas. The layouts accomodate from 1 - 4 images each. If you need to display 6 images, the script simply uses the 4 image layout followed by the 2 image layout (see <a href="example4.htm">Example 4</a>). Some of the layouts are more appropriate for certain combinations of image size, such as 2x landscape 1x portrait, others are more generic.<br />
+<a href="example5.htm">Example 5</a> shows how the script can be used at different widths to fit any space of your page.</p>
+
+<h3>Possible Uses</h3>
+
+<p>The obvious use for this script is anywhere where more than one user submitted image needs to be presented in a HTML page. I'm thinking product databases, forum image uploads, random image rotations, etc etc.<br />
+Once you have 10 or so images, you are better off using an AJAX based image gallery, but this script will fill the gap nicely up till that point.</p>
+
+<h3>Download</h3>
+
+<p>The full source code and examples are downloadable <a href="magazine-layout.zip">here</a></p>
+
+<h3>Thanks &amp; Credits</h3>
+Thanks to <a href="http://www.alex3d.de">Alexander Burkhardt</a> for the use of the demo images. The images were taken on the lovely Hokianga Harbour in Northland New Zealand. 
+
+<h3>About the Author</h3>
+<a href="http://www.harveykane.com"><img src="harvey-100.jpg" alt="Harvey Kane, PHP Web Developer" /></a>
+<p>Harvey Kane is a PHP Web developer living in Auckland, New Zealand who publishes <a href="http://www.ragepank.com">SEO Articles</a> and tools. By day, he produces <a href="http://www.harveykane.com">CMS websites</a> for small businesses.</p>
+
+
+</body>
+</html>
