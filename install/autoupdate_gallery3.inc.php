@@ -126,9 +126,9 @@ $default_fd['gallery3']['g_date'] = array(
 $default_fd['gallery3']['layout'] = array(
         'fd_name' => "Layout Style",
         'fd_type' => "radio",
-        'fd_options' => "square\nmagazine\nmagazine2\njgallery\ncustom",
+        'fd_options' => "square\nmagazine\nmagazineLayout\njgallery\ncustom",
         'fd_default' => 'square',
-        'fd_help' => "Layout format for the gallery: Square = squared thumbs to full-size via lightbox, Magazine = fullsize formatted into a single layout, Magazine2 = thumbs with main image of one selectable by clicking, JGallery = thumbs clickable to update inline fullsize image, Custom = a custom-defined layout",
+        'fd_help' => "Layout format for the gallery: Square = squared thumbs to full-size via lightbox, MagazineLayout = fullsize formatted into a single layout, Magazine2 = thumbs with main image of one selectable by clicking, JGallery = thumbs clickable to update inline fullsize image, Custom = a custom-defined layout",
         'fd_order' => $o++,
         'fd_tabname' => "Content",
     );

@@ -731,7 +731,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         if ($layout == 'jgallery') {
             return $smarty->fetch('jojo_gallery3_jgallery.tpl');
 
-        } elseif ($layout == 'magazine2' ) {
+        } elseif ($layout == 'magazine' ) {
             foreach (Jojo::listPlugins('external/magazine2/magazinelayout2.class.php') as $pluginfile) {
                 require_once($pluginfile);
                 break;
@@ -747,7 +747,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             }
             $smarty->assign('mag', $mag->output());
             return $smarty->fetch('jojo_gallery3_magazine2.tpl');
-        } elseif ($layout == 'magazine') {
+        } elseif ($layout == 'magazineLayout') {
             foreach (Jojo::listPlugins('external/magazine-layout/magazinelayout.class.php') as $pluginfile) {
                 require_once($pluginfile);
                 break;
