@@ -752,7 +752,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                 require_once($pluginfile);
                 break;
             }
-            $mag = new magazinelayout(Jojo::getOption('gallery_magazinelayoutwidth'),1,'<img src="images/[size]/[image]" alt="[alt]" title="[title]" width="[width]" height="[height]" />');
+            $mag = new magazinelayout(Jojo::getOption('gallery_magazinelayoutwidth'),1,'<img src="images/[size]/[image]"  />');
             $max = min(8, count($gallery['files'])); //the magazine script only supports 8 images at present
             for ($i=0;$i<$max;$i++) {
                 $mag->addImage(_DOWNLOADDIR.'/gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename'], 'gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename']);
