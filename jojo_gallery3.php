@@ -270,8 +270,15 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 
         } else {
             $smarty->assign('galleries', $galleries);
-            $smarty->assign('pagecontent', $this->page['pg_body']);
-            $content['content'] = $smarty->fetch('jojo_gallery3_index.tpl');
+            if (strpos($this->page['pg_body'], '[[plugincontent]]')===false) {
+                $smarty->assign('pagecontent', $this->page['pg_body']);
+                $content['content'] = $smarty->fetch('jojo_gallery3_index.tpl');
+            } else {
+                $pluginhtml = $smarty->fetch('jojo_gallery3_index.tpl');
+                $this->page['pg_body'] = str_replace(array('<p>[[plugincontent]]</p>', '<p>[[plugincontent]] </p>', '<p>[[plugincontent]]&nbsp;</p>'), '[[plugincontent]]', $this->page['pg_body']);
+                $content['content'] = str_replace('[[plugincontent]]', $pluginhtml, $this->page['pg_body']);
+            }
+    
         }
         return $content;
     }
