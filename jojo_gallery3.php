@@ -263,6 +263,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $smarty->assign('galleryhtml', self::getGalleryHtml($id, $gallery));
 
             $content['content']         = $smarty->fetch('jojo_gallery3_detail.tpl');
+            $content['javascript']      = $smarty->fetch('jojo_gallery3_js.tpl');
             $content['breadcrumbs']     = $breadcrumbs;
             $content['title']           = $gallery['title'];
             $content['seotitle']        = Jojo::either($gallery['seotitle'], $gallery['title']);
@@ -370,7 +371,6 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 
      public static function foot() {
         return '<script type="text/javascript" src="'._SITEURL.'/external/jquery-lightbox/js/jquery.lightbox-0.4.pack.js"></script>'."\n";
-
     }
 
     public static function getImages($galleryid, $refresh=false, $sort="imageid") {
@@ -740,6 +740,9 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 
         if ($layout == 'jgallery') {
             return $smarty->fetch('jojo_gallery3_jgallery.tpl');
+
+        } elseif ($layout == 'adgallery') {
+            return $smarty->fetch('jojo_gallery3_adgallery.tpl');
 
         } elseif ($layout == 'magazine' ) {
             foreach (Jojo::listPlugins('external/magazine2/magazinelayout2.class.php') as $pluginfile) {
