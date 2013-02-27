@@ -45,7 +45,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         return $galleries;
     }
 
-    static function getItemsById($ids = false, $sortby=false, $clean=true) {
+    public static function getItemsById($ids = false, $sortby=false, $clean=true) {
         $query  = "SELECT i.*, c.*, p.pageid, pg_menutitle, pg_title, pg_url, pg_status, pg_language, pg_livedate, pg_expirydate";
         $query .= " FROM {gallery3} i";
         $query .= " LEFT JOIN {gallerycategory} c ON (i.category=c.gallerycategoryid) LEFT JOIN {page} p ON (c.pageid=p.pageid)";
@@ -59,7 +59,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     }
 
     /* clean items for output */
-    static function cleanItems($items, $exclude=false, $include=false) {
+    private static function cleanItems($items, $exclude=false, $include=false) {
         $now    = time();
         foreach ($items as $k=>&$i){
             $pagedata = Jojo_Plugin_Core::cleanItems(array($i), $include);
@@ -73,13 +73,14 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         return $items;
     }
 
-    static function formatItems($items) {
+    private static function formatItems($items) {
          foreach ($items as $k=>&$i){
             $i['id']           = $i['gallery3id'];
             $i['title']        = htmlspecialchars($i['name'], ENT_COMPAT, 'UTF-8', false);
             $i['menutitle']  = isset($i['menutitle']) && !empty($i['menutitle']) ? htmlspecialchars($i['menutitle'], ENT_COMPAT, 'UTF-8', false) : $i['title'];
             // Snip for the index description
-            $i['bodyplain'] = array_shift(Jojo::iExplode('[[snip]]', $i['body']));
+            $splitcontent = Jojo::iExplode('[[snip]]', $i['body']);
+            $i['bodyplain'] = array_shift($splitcontent);
             /* Strip all tags and template include code ie [[ ]] */
             $i['bodyplain'] = preg_replace('/\[\[.*?\]\]/', '',  trim(strip_tags($i['bodyplain'])));
             $i['date']       = $i['g_date'];
@@ -117,7 +118,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     }
 
     /* sort items for output */
-    static function sortItems($items, $sortby=false) {
+    private static function sortItems($items, $sortby=false) {
         if ($sortby) {
             $order = "date";
             $reverse = false;
@@ -279,7 +280,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                 $this->page['pg_body'] = str_replace(array('<p>[[plugincontent]]</p>', '<p>[[plugincontent]] </p>', '<p>[[plugincontent]]&nbsp;</p>'), '[[plugincontent]]', $this->page['pg_body']);
                 $content['content'] = str_replace('[[plugincontent]]', $pluginhtml, $this->page['pg_body']);
             }
-    
+
         }
         return $content;
     }
@@ -304,7 +305,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         return $_cache[$cacheKey];
     }
 
-    static function getPrefixById($id=false) {
+    public static function getPrefixById($id=false) {
         if ($id) {
             $data = Jojo::selectRow("SELECT category FROM {gallery3} WHERE gallery3id = ?", array($id));
             $prefix = $data ? self::_getPrefix($data['category']) : '';
@@ -453,7 +454,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
 
         $sort =  (isset($files[0]['sortby']) && $files[0]['sortby']) ? $files[0]['sortby'] : 'date';
         usort($files, array('Jojo_Plugin_Jojo_gallery3', $sort . 'sort'));
-        return $files;
+        return array_values($files);
     }
 
     public static function getAdminHtml($galleryid)
@@ -561,19 +562,19 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         }
         return true;
     }
-    
+
     public static function admin_action_after_save_gallery3($galleryid)
     {
-   
+
 
         if (isset($_FILES['uploadimage'])) {
             $n = count($_FILES['uploadimage']['name']);
-            
+
             foreach($_FILES['uploadimage']['name'] as $f => $filename) {
                 $frajax = new frajax();
                 $frajax->title = 'Upload Image - ' . _SITETITLE;
                 $frajax->sendHeader();
-                
+
                 /* We must not allow PHP files to be uploaded to the server - dangerous */
                 $ext = Jojo::getfileextension($filename);
                 if ( ($ext == 'php') || ($ext == 'php3') || ($ext == 'php4') || ($ext == 'inc') || ($ext == 'phtml')) {
@@ -581,7 +582,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                     $frajax->sendFooter();
                     exit();
                 }
-                
+
                 //Check error codes
                 switch ($_FILES['uploadimage']['error'][$f]) {
                     case UPLOAD_ERR_INI_SIZE: //1
@@ -609,10 +610,10 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                             $frajax->alert('The write permissions may not be set correctly on this folder. Please contact the administrator.');
                             exit();
                         }
-                
+
                         if ($error != '') $frajax->alert($error);
-                
-                
+
+
                            /* Rename files on the way up to be search engine friendly - no spaces, no caps, no special chars */
                           $pieces = explode('.',$filename);
                           if (count($pieces) > 1) {
@@ -624,14 +625,14 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                             $newfilename .= '.'.strtolower($pieces[count($pieces)-1]);
                             $filename = $newfilename;
                           }
-                
-                
+
+
                            /* All appears good, so attempt to move to final resting place */
-                
-                
+
+
                         $destination = _DOWNLOADDIR.'/gallery3/'.$galleryid;
                         $destination = rtrim($destination,'/').'/'.basename($filename);
-                
+
                         /* ensure the destination is within _DOWNLOADDIR */
                         if (!preg_match('%^'._DOWNLOADDIR.'(.*)\\z%im', $destination)) {
                             $frajax->alert('Destination folder ('.$destination.') out of bounds');
@@ -639,10 +640,10 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                        }
                         Jojo::RecursiveMkdir(dirname($destination));
                         //Ensure file does not already exist on server, rename if it does
-                
+
                         if (move_uploaded_file($_FILES['uploadimage']['tmp_name'][$f], $destination)) {
                           //$frajax->alert('File uploaded');
-                
+
                           /* reload parts of the UI */
                           foreach (Jojo::listPlugins('jojo_gallery3.php') as $pluginfile) {
                               require_once($pluginfile);
@@ -668,13 +669,13 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                         //this code shouldn't execute - 0 should be the default
                 }
             }
-        
+
         }
 
-        
+
         return true;
     }
-    
+
 
     // Sync the category to the page table
     static function admin_action_after_save_gallerycategory($id) {
@@ -727,7 +728,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     }
 
 
-    public static function getGalleryHtml($galleryid, $gallery=false, $clean=true)
+    public static function getGalleryHtml($galleryid, $gallery=false, $clean=true, $filter=false)
     {
         if (!$galleryid) return '';
         global $smarty;
@@ -737,7 +738,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $smarty->assign('galleryid', $galleryid);
         $smarty->assign('gallery', $gallery);
         $smarty->assign('images', $gallery['files']);
-
+        $smarty->assign('filter', $filter);
         if ($layout == 'jgallery') {
             return $smarty->fetch('jojo_gallery3_jgallery.tpl');
 
@@ -771,7 +772,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                 $mag->addImage(_DOWNLOADDIR.'/gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename'], 'gallery3/' . $galleryid . '/' . $gallery['files'][$i]['filename']);
             }
             $smarty->assign('mag', $mag->getHtml());
-            return $smarty->fetch('jojo_gallery3_magazine.tpl');    
+            return $smarty->fetch('jojo_gallery3_magazine.tpl');
         } elseif ($layout == 'custom') {
             $html = $smarty->fetch('jojo_gallery3_custom.tpl');
             $html = Jojo::applyFilter('jojo_gallery3_custom', $html, array($galleryid, $gallery));
@@ -796,7 +797,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                 $id = $gallery['gallery3id'];
             }
             if (isset($id)) {
-                $html      = self::getGalleryHtml($id, '', $clean=false);
+                $html      = self::getGalleryHtml($id, '', $clean=false, $filter=true);
                 $content   = str_replace($matches[0][$k], $html, $content);
             }
         }
@@ -804,7 +805,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     }
 
     /* data is an array of all fields from the database - saves an extra query */
-    public function getUrl($id, $url=false, $title=false, $language=false, $categoryid=false)
+    public static function getUrl($id, $url=false, $title=false, $language=false, $categoryid=false)
     {
         if (_MULTILANGUAGE) {
             $language = !empty($language) ? $language : Jojo::getOption('multilanguage-default', 'en');

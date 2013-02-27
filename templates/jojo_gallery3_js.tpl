@@ -30,7 +30,7 @@
       var result = i.replace(reg, "images/"+w+"x"+h+"/$3");
       return result;
     }
-    
+
     $('div.mag a:not(.main)').click(function(){
       var mainimg = $(this).parents().find("a.main img");
       var maina = $(this).parents().find("a.main");
@@ -53,17 +53,20 @@
       maina.attr('href',href);
       $(this).parents().find(".selected").removeClass('selected');
       $(this).addClass('selected');
-    
+
       return false;
     });
     {/literal}
 {elseif $gallery.layout=='jgallery'}
     $(document).ready(function(){ldelim}
-        $("#jgallery-{$galleryid} .jg-thumbnails li a").click(function(){ldelim}
+        $("#jgallery-{$galleryid} .jg-thumbnails li:first-child a").hide();
+        $("#jgallery-{$galleryid} .jg-thumbnails li a").bind("click", function(){ldelim}
             $("#jgallery-{$galleryid} .jg-large img").hide().attr({ldelim}"src": $(this).attr("href"), "title": $("> img", this).attr("title"), "alt": $("> img", this).attr("title"){rdelim});
+            $("#jgallery-{$galleryid} .jg-thumbnails li a").show();
+            $(this).hide();
     		$("#jgallery-{$galleryid} .jg-caption p").html($("> img", this).attr("title"));
     		return false;
-    	{rdelim}, '');
+    	{rdelim});
     	$("#jgallery-{$galleryid} .jg-large img").load(function(){ldelim}$("#jgallery-{$galleryid} .jg-large img:hidden").fadeIn("slow"){rdelim});
     {rdelim});
 {elseif $gallery.layout=='adgallery'}
