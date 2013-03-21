@@ -1,15 +1,21 @@
-{if $gallery.layout=='square'}
-    $(function() {ldelim}
-        $('.gallery-square a[rel*=lightbox]').lightBox({ldelim}
-        overlayBgColor: '#000',
-        overlayOpacity: 0.8,
-        imageBlank: '{$SITEURL}/external/jquery-lightbox/images/lightbox-blank.gif',
-        imageLoading: '{$SITEURL}/external/jquery-lightbox/images/lightbox-ico-loading.gif',
-        imageBtnClose: '{$SITEURL}/external/jquery-lightbox/images/lightbox-btn-close.gif',
-        imageBtnPrev: '{$SITEURL}/external/jquery-lightbox/images/lightbox-btn-prev.gif',
-        imageBtnNext: '{$SITEURL}/external/jquery-lightbox/images/lightbox-btn-next.gif',
-        containerResizeSpeed: 200{rdelim});
-    {rdelim});
+{if $gallery.layout=='square'}{literal}
+    $(function() {
+        $('.gallery-square a').colorbox({
+        rel: 'lightbox',
+        width:"95%",
+        height:"95%",
+        current: "{current}/{total}"
+        });{/literal}
+         {if $OPTIONS.jquery_touch == 'yes'}
+            $('#cboxContent').swipeleft(function() {ldelim}
+                $.colorbox.next();
+           {rdelim});
+            $('#cboxContent').swiperight(function() {ldelim}
+                $.colorbox.prev();
+           {rdelim});
+        {/if}
+   {rdelim});
+
 {elseif $gallery.layout=='magazine'}
     $(function() {ldelim}
     	$('.gallery-square a[rel*=lightbox]').lightBox({ldelim}
