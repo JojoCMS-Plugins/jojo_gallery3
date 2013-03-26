@@ -2,7 +2,7 @@
     <div id="jgallery-{$galleryid}">
         {if $gallery.numimages >1 && $jthumbs=='above'}<div class="jg-thumbnail-wrap">
             <ul  class="jg-thumbnails">
-                {foreach from=$images item=i}<li><a href="images/{if $gallery.previewsize}{$gallery.previewsize}{else}w450{/if}/gallery3/{$galleryid}/{$i.filename}" onclick= "return false;"><img id="{$i.filename}" title="{$i.caption}" src="images/{if $gallery.thumbsize}{$gallery.thumbsize}{else}s50{/if}/gallery3/{$galleryid}/{$i.filename}" alt="{$i.caption}" /></a></li>
+                {foreach from=$images key=k item=i}<li><a href="images/{if $gallery.previewsize}{$gallery.previewsize}{else}w450{/if}/gallery3/{$galleryid}/{$i.filename}" onclick="return false;"{if $k==0} class="current"{/if}><img id="{$i.filename}" title="{$i.caption}" src="images/{if $gallery.thumbsize}{$gallery.thumbsize}{else}s50{/if}/gallery3/{$galleryid}/{$i.filename}" alt="{$i.caption}" /></a></li>
                 {/foreach}
             </ul>
         </div>
