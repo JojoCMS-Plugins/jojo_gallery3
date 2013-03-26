@@ -69,7 +69,7 @@
         $("#jgallery-{$galleryid} .jg-thumbnails li a").bind("click", function(){ldelim}
             $("#jgallery-{$galleryid} .jg-large img").hide().attr({ldelim}"src": $(this).attr("href"), "title": $("> img", this).attr("title"), "alt": $("> img", this).attr("title"){rdelim});
             $("#jgallery-{$galleryid} .jg-thumbnails li a").show();
-            $(this).hide();
+            $(this).addClass('current');
     		$("#jgallery-{$galleryid} .jg-caption p").html($("> img", this).attr("title"));
     		return false;
     	{rdelim});
