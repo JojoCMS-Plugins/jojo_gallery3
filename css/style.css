@@ -38,36 +38,32 @@ div.mag a:hover img {
     float: left;
 }
 
-#content div.jgallery div.jg-large {
-	background: url(../images/ajax-loader.gif) center no-repeat ;
+div.jgallery div.jg-large {
+	background: transparent url('../images/ajax-loader.gif') center center no-repeat;
 	min-height: 200px;
 }
 
-#content div.jgallery div.jg-thumbnail-wrap {
+div.jgallery div.jg-thumbnail-wrap {
 	overflow: auto;
     margin-bottom: 10px;
 }
 
-#content div.jgallery div.jg-thumbnail-wrap ul {
+div.jgallery div.jg-thumbnail-wrap ul {
 	margin: 0;
 }
 
-#content div.jgallery .jg-thumbnails {
+div.jgallery .jg-thumbnails {
 	float: left;
 	clear:both;
 }
 
-#content div.jgallery ul.jg-thumbnails li {
+div.jgallery ul.jg-thumbnails li {
 	float: left;
 	margin: 0;
 	list-style: none;
 }
 
-#content div.jgallery .jg-thumbnails a {
-	display: block;
-}
-
-#content div.jgallery .jg-thumbnails img {
+div.jgallery .jg-thumbnails a, div.jgallery .jg-thumbnails img {
 	display: block;
 }
 

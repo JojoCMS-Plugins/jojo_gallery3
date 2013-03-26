@@ -152,3 +152,14 @@ $_options[] = array(
     'options'     => '',
     'plugin'      => 'jojo_gallery3'
 );
+
+$_options[] = array(
+    'id'          => 'gallery_jgallerythumbs',
+    'category'    => 'Gallery',
+    'label'       => 'jGallery Thumbs',
+    'description' => 'Display thumbnails above or below the main image?',
+    'type'        => 'radio',
+    'default'     => 'above',
+    'options'     => 'above,below',
+    'plugin'      => 'jojo_gallery3'
+);

@@ -740,6 +740,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
         $smarty->assign('images', $gallery['files']);
         $smarty->assign('filter', $filter);
         if ($layout == 'jgallery') {
+            $smarty->assign('jthumbs', Jojo::getOption('gallery_jgallerythumbs', 'above'));
             return $smarty->fetch('jojo_gallery3_jgallery.tpl');
 
         } elseif ($layout == 'adgallery') {
