@@ -68,7 +68,7 @@
         $("#jgallery-{$galleryid} .jg-thumbnails li:first-child a").hide();
         $("#jgallery-{$galleryid} .jg-thumbnails li a").bind("click", function(){ldelim}
             $("#jgallery-{$galleryid} .jg-large img").hide().attr({ldelim}"src": $(this).attr("href"), "title": $("> img", this).attr("title"), "alt": $("> img", this).attr("title"){rdelim});
-            $("#jgallery-{$galleryid} .jg-thumbnails li a").show();
+            $("#jgallery-{$galleryid} .jg-thumbnails li a").show().removeClass('current');
             $(this).addClass('current');
     		$("#jgallery-{$galleryid} .jg-caption p").html($("> img", this).attr("title"));
     		return false;
