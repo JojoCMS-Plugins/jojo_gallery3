@@ -15,3 +15,9 @@
 {/foreach}
 </div>
 <div class="clear"></div>
+{if $filter}<script type="text/javascript">
+/*<![CDATA[*/
+{include file="jojo_gallery3_js.tpl"}
+/*]]>*/
+</script>
+{/if}
