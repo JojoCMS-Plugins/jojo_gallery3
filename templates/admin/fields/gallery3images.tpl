@@ -7,7 +7,7 @@
     <input name="MAX_FILE_SIZE" value="2000000" type="hidden" />
     <input name="uploadimage[]" id="uploadimage" type="file" multiple="multiple" />
   </div>
-  <p><strong>File's to upload</strong></p>
+  <p><strong>Files to upload</strong></p>
   <ul id="fileList">
     <li>No Files Selected</li>
   </ul>
