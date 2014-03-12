@@ -2,8 +2,8 @@
     $(function() {
         $('.gallery-square a').colorbox({
         rel: 'lightbox',
-        width:"95%",
-        height:"95%",
+        maxWidth:"100%",
+        maxHeight:"100%",
         current: "{current}/{total}"
         });{/literal}
          {if $OPTIONS.jquery_touch == 'yes'}
