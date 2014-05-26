@@ -1,17 +1,13 @@
-<div class="gallery-square">
+<div class="gallery-square row">
 {foreach from=$images item=img}
-{if $gallery.showcaptions}
     <div class="galleryimagebox">
-        <p class="caption">
-{/if}
-        <a href="images/{if $gallery.previewsize}{$gallery.previewsize}{else}w450{/if}/gallery3/{$galleryid}/{$img.filename}" rel="lightbox" title="{if $img.caption}{$img.caption}{/if}{if $img.credit} - {$img.credit}{/if} {if $img.date and $gallery.showdate} - {$img.date}{/if}">
-        <img src="images/{if $gallery.thumbsize}{$gallery.thumbsize}{else}s100{/if}/gallery3/{$galleryid}/{$img.filename}" alt="{if $img.caption}{$img.caption}{/if}" /></a>
+        <a class="thumbnail" href="images/{if $gallery.previewsize}{$gallery.previewsize}{else}w450{/if}/gallery3/{$galleryid}/{$img.filename}" rel="lightbox" title="{if $img.caption}{$img.caption}{/if}{if $img.credit} - {$img.credit}{/if} {if $img.date and $gallery.showdate} - {$img.date}{/if}">
+            <img src="images/{if $gallery.thumbsize}{$gallery.thumbsize}{else}s100{/if}/gallery3/{$galleryid}/{$img.filename}" alt="{if $img.caption}{$img.caption}{/if}" />
+        </a>
 {if $gallery.showcaptions}
-        <br />
-        {if $img.caption}{$img.caption}{/if}
-        </p>
-    </div>
+        <p class="caption">{if $img.caption}{$img.caption}{/if}</p>
 {/if}
+    </div>
 {/foreach}
 </div>
 <div class="clear"></div>

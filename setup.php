@@ -20,14 +20,15 @@
 
 /* Gallery */
 Jojo::updateQuery("UPDATE {page} SET pg_link='Jojo_Plugin_Jojo_Gallery3' WHERE pg_link='jojo_gallery3.php'");
-$data = Jojo::selectQuery("SELECT * FROM {page} WHERE pg_link='Jojo_Plugin_Jojo_Gallery3'");
+$data = Jojo::selectQuery("SELECT * FROM {page} WHERE pg_link='jojo_plugin_jojo_gallery3'");
 if (!count($data)) {
     echo "jojo_gallery3: Adding <b>Gallery</b> Page to menu<br />";
 
     /* ensure there are no clashes with /gallery/ for the URL */
     $data = Jojo::selectQuery("SELECT * FROM {page} WHERE pg_url='gallery'");
     $url = count($data) ? 'gallery3' : 'gallery';
-    Jojo::insertQuery("INSERT INTO {page} SET pg_title='Gallery', pg_link='Jojo_Plugin_Jojo_Gallery3', pg_url= ?, pg_order=4", array($url));
+    $pageid = Jojo::insertQuery("INSERT INTO {page} SET pg_title='Gallery', pg_link='jojo_plugin_jojo_gallery3', pg_url= ?, pg_order=4", array($url));
+    Jojo::insertQuery("INSERT INTO {gallerycategory} SET pageid= ?", array($pageid));
 }
 
 /* Edit Gallery */

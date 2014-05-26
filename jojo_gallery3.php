@@ -582,7 +582,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                     $frajax->sendFooter();
                     exit();
                 }
-
+                $error = false;
                 //Check error codes
                 switch ($_FILES['uploadimage']['error'][$f]) {
                     case UPLOAD_ERR_INI_SIZE: //1
@@ -611,7 +611,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                             exit();
                         }
 
-                        if ($error != '') $frajax->alert($error);
+                        if ($error) $frajax->alert($error);
 
 
                            /* Rename files on the way up to be search engine friendly - no spaces, no caps, no special chars */

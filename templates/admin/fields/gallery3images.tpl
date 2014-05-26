@@ -1,15 +1,14 @@
 <div id="upload-form">
 {*<form enctype="multipart/form-data" action="{$SITEURL}/actions/gallery3-upload-image.php?id={$currentid}" target="frajax-iframe" method="post">*}
-  <h3>Upload images</h3>
   {if $currentid}
   <div id="example1">
-    <label for="uploadimage">Upload image:</label>
+    <label for="uploadimage">Upload image(s):</label>
     <input name="MAX_FILE_SIZE" value="2000000" type="hidden" />
     <input name="uploadimage[]" id="uploadimage" type="file" multiple="multiple" />
   </div>
-  <p><strong>Files to upload</strong></p>
-  <ul id="fileList">
-    <li>No Files Selected</li>
+  <h4>Files to upload on Save</h4>
+  <ul id="fileList" class="list-unstyled">
+    <li>none</li>
   </ul>
   {else}You must save this new gallery before you can upload images{/if}
 {*</form>*}
@@ -30,6 +29,7 @@ $('#uploadimage').change(function(){
     });
 });
 {/literal}</script>
+<h4>Uploaded images</h4>
 <div id="files">
-{if $thumbs}{$thumbs}{/if}
+{if $thumbs}{$thumbs}{else}none{/if}
 </div>
