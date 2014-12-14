@@ -28,7 +28,7 @@ class Jojo_Field_gallery3Image extends Jojo_Field
     function __construct($fielddata = array())
     {
         parent::__construct($fielddata);
-        $this->fd_maxvalue   = Jojo::getOption('max_imageupload_size','2000')*1000;
+        $this->fd_maxvalue   = 1000 * Jojo::getOption('max_fileupload_size','5000');
         $this->thumbsize     = 200; //pixels - this should be defined in the DB rather than hard-coded here
         $this->viewthumbsize = 350;
     }
@@ -55,7 +55,7 @@ class Jojo_Field_gallery3Image extends Jojo_Field
     {
         $galleryid = $this->table->getFieldValue('gallery3id');
 
-        $retval = '';
+        $retval = '<div class="col-md-12">';
         $crop_x = '';
         $crop_y = '';
         $thumb_w = 0;
@@ -74,7 +74,7 @@ class Jojo_Field_gallery3Image extends Jojo_Field
                 } else {
                     $filelogo = 'images/cms/filetypes/default.gif';
                 }
-                $retval = '<span title="' . Jojo::roundBytes($filesize) . '"><a href="' . _SITEURL . '/downloads/gallery3/' . $galleryid . '/' . $this->value . '" target="_BLANK"><img src="' . $filelogo . '" border="0" align="absmiddle" /> ' . $this->value . '</a></span><a href="" title="Delete File" onclick="$(\'input[@name=fm_' . $this->fd_field . '_delete]\').val(\'delete\'); alert(\'This image will be deleted when the record is saved\');return false;"><img src="images/cms/icons/delete.png" border="0" align="absmiddle" /></a><br />';
+                $retval .= '<span title="' . Jojo::roundBytes($filesize) . '"><a href="' . _SITEURL . '/downloads/gallery3/' . $galleryid . '/' . $this->value . '" target="_BLANK"><img src="' . $filelogo . '" border="0" align="absmiddle" /> ' . $this->value . '</a></span><br />';
 
                 /* If an image, then display a thumbnail image */
                 if ( (strtolower(Jojo::getFileExtension($this->value)) == "jpg") or (strtolower(Jojo::getFileExtension($this->value)) == "jpeg") or (strtolower(Jojo::getFileExtension($this->value)) == "gif") or (strtolower(Jojo::getFileExtension($this->value)) == "png") ) {
@@ -104,16 +104,16 @@ class Jojo_Field_gallery3Image extends Jojo_Field
             }
         }
 
-        $class = ($this->error != "") ? ' class="error"' : '';
-        $retval .= '<input type="hidden" name="fm_' . $this->fd_field . "\" value=\"" . $this->value . "\" /><input type=\"hidden\" name=\"fm_" . $this->fd_field . "_delete\" value=\"\" />";
+        $class = ($this->error != "") ? 'error' : '';
+        $retval .= '<input type="hidden" name="fm_'.$this->fd_field."\" value=\"".$this->value."\" /><input type=\"hidden\" name=\"fm_".$this->fd_field."_delete\" value=\"\" />";
         $retval .= '<div style="color: #999">'.$this->value.'</div>';
-        $retval .= '<input type="hidden" name="MAX_FILE_SIZE" value="'.$this->fd_maxvalue.'" />'."\n".'<input'.$class.' type="file" name="fm_FILE_'.$this->fd_field.'" id="fm_FILE_'.$this->fd_field.'"  size="'.$this->fd_size.'" value=""'.$readonly.' onchange="fullsave=true;" title="'.htmlentities($this->fd_help).'" />';
+        $retval .= '<input type="hidden" name="MAX_FILE_SIZE" value="'.$this->fd_maxvalue.'" />'."\n".'<input class="' . $class . '" type="file" name="fm_FILE_'.$this->fd_field.'" id="fm_FILE_'.$this->fd_field.'"  size="'.$this->fd_size.'" value=""'.$readonly.' onchange="fullsave=true;" title="'.htmlentities($this->fd_help).'" />';
         $cropval = ($crop_x && $crop_y) ? $crop_x .','. $crop_y : '';
         $retval .= '<input type="hidden" name="fm_crop_'.$this->fd_field.'" id="fm_crop_'.$this->fd_field.'" value="'.$cropval.'" />';
-        $retval .= '<script type="text/javascript">var crop=$(\'#fm_crop_'.$this->fd_field.'\').val().split(\',\'); if (crop.length==2){$(\'#crop_canvas_'.$this->fd_field.'\').append(\'<div class="crop_point" style="margin:\'+(Math.round(crop[1]*'.($thumb_h/100).') - 25)+\'px 0 0 \'+(Math.round(crop[0]*'.($thumb_w/100).') - 25)+\'px;"></div>\');} $(\'#crop_canvas_'.$this->fd_field.'\').mousedown(function(event){$(\'#crop_canvas_'.$this->fd_field.'\').children(\'.crop_point\').remove();$(\'#crop_canvas_'.$this->fd_field.'\').append(\'<div class="crop_point" style="margin:\'+(event.pageY - this.offsetTop - 25)+\'px 0 0 \'+(event.pageX - this.offsetLeft - 25)+\'px;"></div>\');$(\'#fm_crop_'.$this->fd_field.'\').val( Math.round((event.pageX - this.offsetLeft)/'.($thumb_w/100).')+\',\'+Math.round((event.pageY - this.offsetTop)/'.($thumb_h/100).'));return false;});</script>';
-        
-        
-        
+        $retval .= '<script type="text/javascript">var crop=$(\'#fm_crop_'.$this->fd_field.'\').val().split(\',\'); if (crop.length==2){$(\'#crop_canvas_'.$this->fd_field.'\').append(\'<div class="crop_point" style="margin:\'+(Math.round(crop[1]*'.($thumb_h/100).') - 25)+\'px 0 0 \'+(Math.round(crop[0]*'.($thumb_w/100).') - 25)+\'px;"></div>\');} $(\'#crop_canvas_'.$this->fd_field.'\').mousedown(function(event){$(\'#crop_canvas_'.$this->fd_field.'\').children(\'.crop_point\').remove();$(\'#crop_canvas_'.$this->fd_field.'\').append(\'<div class="crop_point" style="margin:\'+(event.pageY - $(this).offset().top - 25)+\'px 0 0 \'+(event.pageX - $(this).offset().left - 25)+\'px;"></div>\');$(\'#fm_crop_'.$this->fd_field.'\').val( Math.round((event.pageX - $(this).offset().left)/'.($thumb_w/100).')+\',\'+Math.round((event.pageY - $(this).offset().top)/'.($thumb_h/100).'));return false;});</script>' . "\n";
+        $retval .= '</div>';
+
+
         return $retval;
     }
 
@@ -127,17 +127,18 @@ class Jojo_Field_gallery3Image extends Jojo_Field
             /* Make sure the file exists */
             if (file_exists(_DOWNLOADDIR.'/'.$this->fd_table.'/'.$this->value)) {
                 $filesize = filesize(_DOWNLOADDIR.'/'.$this->fd_table.'/'.$this->value);
-                $filetype = strtolower(Jojo::getfileextension($this->value));
+                $filetype = strtolower(Jojo::getFileExtension($this->value));
                 /* display logo image (dependent on file extension) if one exists, otherwise use the default (txt) */
                 if (file_exists(_BASEPLUGINDIR . '/jojo_core/images/cms/filetypes/' . $filetype . '.gif')) {
                     $filelogo = 'images/cms/filetypes/' . $filetype . '.gif';
                 } else {
                     $filelogo = 'images/cms/filetypes/default.gif';
                 }
-                $retval = '<span title="' . Jojo::roundBytes($filesize) . '"><a href="' . _SITEURL . '/downloads/gallery3/' . $galleryid . '/' . $this->value .'" target="_BLANK"><img src="' . $filelogo . "\" border=\"0\" align=\"absmiddle\"> " . $this->value . "</a></span><br>";
+                $retval .= '<div class="col-md-12">';
+                $retval .= '<span title="' . Jojo::roundBytes($filesize) . '"><a href="' . _SITEURL . '/downloads/gallery3/' . $galleryid . '/' . $this->value .'" target="_BLANK"><img src="' . $filelogo . "\" border=\"0\" align=\"absmiddle\"> " . $this->value . "</a></span><br>";
 
                 //If an image, then display a thumbnail image
-                if ( (strtolower(Jojo::getFileExtension($this->value)) == "jpg") or (strtolower(Jojo::getFileExtension($this->value)) == "jpeg") ) {
+                if ( $filetype == "jpg" || $filetype == "jpeg" ) {
                     /* Find out the dimensions of the image (actual size) */
                     $imagesize = getimagesize(_DOWNLOADDIR.'/'.$this->fd_table.'s/'.$this->value);
                     /* this would happen for a file that is labelled as an image, but isn't a valid format */
@@ -147,12 +148,13 @@ class Jojo_Field_gallery3Image extends Jojo_Field
                         $retval .= '<span title="Actual size ' . $imagesize[0] . 'x'. $imagesize[1].'px '. Jojo::roundBytes($filesize).'"><img src="images/' . $this->viewthumbsize.'/gallery3/' . $galleryid . '/' . $this->value . '" border="0" align="absmiddle" alt="' . $this->value . '"></span><br>';
                     }
                 }
+                $retval .= '</div>';
             } else { //the database says there should be a file, but there isn't
                 $this->error = 'The image is missing from the upload directory'; //this should already be set by now
             }
         }
 
-        if ($this->error != '') {$class = ' class="error"';}
+        if ($this->error != '') {$class = ' error';}
 
         return $retval;
     }
@@ -174,7 +176,8 @@ class Jojo_Field_gallery3Image extends Jojo_Field
 
         $retval = "";
         if (file_exists(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $this->value )) {
-            if ( (strtolower(Jojo::getFileExtension($this->value)) == 'jpg') or (strtolower(Jojo::getFileExtension($this->value)) == 'jpeg') ) {
+            $filetype = strtolower(Jojo::getFileExtension($this->value));
+            if ($filetype == "jpg" || $filetype == "jpeg") {
                 /* Find out the dimensions of the image (actual size) */
                 $imagesize = getimagesize(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $this->value );
                 /* this would happen for a file that is labelled as an image, but isn't a valid format */
@@ -215,11 +218,11 @@ class Jojo_Field_gallery3Image extends Jojo_Field
         $galleryid = $this->table->getFieldValue('gallery3id');
 
         /* set cropdata if needed */
-        if (!empty($newvalue) && !empty($_POST['fm_crop_'.$this->fd_field])) {           
+        if (!empty($newvalue) && !empty($_POST['fm_crop_'.$this->fd_field])) {
             $crop = explode(',', $_POST['fm_crop_'.$this->fd_field]);
             $data = file_get_contents(_DOWNLOADDIR . '/gallery3/' . $galleryid . '/'. $newvalue);
             Jojo::updateQuery("REPLACE INTO {cropdata} SET hash=?, filename=?, x=?, y=?", array(sha1($data), $newvalue, $crop[0], $crop[1]));
-            
+
             /* wipe any cached copies of this image */
             $cache_folders = scandir(_CACHEDIR.'/images/');
             foreach ($cache_folders as $root) {
@@ -242,10 +245,10 @@ class Jojo_Field_gallery3Image extends Jojo_Field
         /* Check error codes */
         switch ($_FILES['fm_FILE_'.$this->fd_field]['error']) {
             case UPLOAD_ERR_INI_SIZE: //1
-                $this->error = 'The uploaded file exceeds the maximum size allowed ('.$this->fd_maxvalue.')';
+                $this->error = 'The uploaded file exceeds the maximum size allowed in PHP.INI';
                 break;
             case UPLOAD_ERR_FORM_SIZE: //2
-                $this->error = 'The uploaded file exceeds the maximum size allowed in PHP.INI';
+                $this->error = 'The uploaded file exceeds the maximum size allowed ('.$this->fd_maxvalue.')';
                 break;
             case UPLOAD_ERR_PARTIAL: //3
                 $this->error = 'The file has only been partially uploaded. There may have been an error in transfer, or the server may be having technical problems.';
@@ -289,7 +292,7 @@ class Jojo_Field_gallery3Image extends Jojo_Field
                 }
 
                 /* move to final location */
-                if (move_uploaded_file($tmpfilename, $destination)) {
+                if (file_exists($destination) || move_uploaded_file($tmpfilename, $destination)) {
                     $message = "Upload successful";
                     $this->value =  Jojo::either($newname, $filename);
                 } else {
@@ -338,7 +341,7 @@ class Jojo_Field_gallery3Image extends Jojo_Field
             return false;
         }
 
-        /* clear field in database to reflect deleted file */
+        /* Clear field in database to reflect deleted file */
         if ($this->table->getRecordID() != 0) {
             $query = sprintf("UPDATE {%s} SET `%s` = '' WHERE `%s` = ? LIMIT 1",
                                 $this->fd_table,
@@ -349,11 +352,11 @@ class Jojo_Field_gallery3Image extends Jojo_Field
         }
         $this->value = '';
 
-        /* file is gone */
+        /* File is gone */
         return true;
     }
 
-    /* delete the file when the database record is deleted */
+    /* Delete the file when the database record is deleted */
     function ondelete()
     {
         $this->deletefile();

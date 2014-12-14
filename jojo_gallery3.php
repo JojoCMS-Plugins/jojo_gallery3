@@ -111,6 +111,10 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $i['indeximagesize'] =  isset($i['indeximagesize']) && !empty($i['indeximagesize']) ? $i['indeximagesize'] : $i['thumbsize'];
             $i['baseurl']          = $i['url'];
             $i['url']          = self::getUrl($i['id'], $i['url'], $i['title'], $i['language'], $i['category']);
+             if (class_exists('Jojo_Plugin_Jojo_Tags') ) {
+                /* Split up tags for display */
+                $i['tags'] = Jojo_Plugin_Jojo_Tags::getTags('jojo_gallery3', $i['id']);
+            }
             $i['plugin']     = 'jojo_gallery3';
             unset($items[$k]['bodycode']);
         }
