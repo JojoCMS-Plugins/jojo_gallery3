@@ -149,7 +149,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
     }
 
     private static function namesort($a, $b) {
-         if (isset($a['name'])) {
+         if (isset($a['name']) && isset($b['name'])) {
             return strcmp($a['name'],$b['name']);
         } else {
             return strcmp($a['filename'],$b['filename']);
