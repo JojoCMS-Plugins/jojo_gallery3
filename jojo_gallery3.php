@@ -528,7 +528,7 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
             $url = Jojo::getFormData('url', '');
         }
         foreach ($galleries as $g) {
-            $nav[$g['id']]['url'] = $g['url'];
+            $nav[$g['id']]['url'] = _SITEURL . '/' . $g['url'];
             $nav[$g['id']]['title'] = $g['title'];
             $nav[$g['id']]['label'] = $g['menutitle'];
             $nav[$g['id']]['selected'] = (boolean)($selected && (($id && $id== $g['id']) ||(!empty($url) && $g['baseurl'] == $url)));

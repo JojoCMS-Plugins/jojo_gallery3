@@ -7,7 +7,7 @@ $(document).ready(function() {
 });
 
 /*!
-	Colorbox 1.6.0
+	Colorbox 1.6.3
 	license: MIT
 	http://www.jacklmoore.com/colorbox
 */
@@ -123,7 +123,7 @@ $(document).ready(function() {
 				iframe.allowTransparency = "true";
 			}
 			iframe.name = (new Date()).getTime(); // give the iframe a unique name to prevent caching
-			iframe.allowFullScreen = true;
+			iframe.allowFullscreen = true;
 
 			return iframe;
 		}
@@ -421,8 +421,8 @@ $(document).ready(function() {
 				var maxWidth = settings.get('maxWidth');
 				var maxHeight = settings.get('maxHeight');
 
-				settings.w = (maxWidth !== false ? Math.min(initialWidth, setSize(maxWidth, 'x')) : initialWidth) - loadedWidth - interfaceWidth;
-				settings.h = (maxHeight !== false ? Math.min(initialHeight, setSize(maxHeight, 'y')) : initialHeight) - loadedHeight - interfaceHeight;
+				settings.w = Math.max((maxWidth !== false ? Math.min(initialWidth, setSize(maxWidth, 'x')) : initialWidth) - loadedWidth - interfaceWidth, 0);
+				settings.h = Math.max((maxHeight !== false ? Math.min(initialHeight, setSize(maxHeight, 'y')) : initialHeight) - loadedHeight - interfaceHeight, 0);
 
 				$loaded.css({width:'', height:settings.h});
 				publicMethod.position();
@@ -982,7 +982,7 @@ $(document).ready(function() {
 
 			$(photo)
 			.addClass(prefix + 'Photo')
-			.bind('error',function () {
+			.bind('error.'+prefix,function () {
 				prep($tag(div, 'Error').html(settings.get('imgError')));
 			})
 			.one('load', function () {
@@ -1021,9 +1021,10 @@ $(document).ready(function() {
 
 					if ($related[1] && (settings.get('loop') || $related[index + 1])) {
 						photo.style.cursor = 'pointer';
-						photo.onclick = function () {
+
+						$(photo).bind('click.'+prefix, function () {
 							publicMethod.next();
-						};
+						});
 					}
 
 					photo.style.width = photo.width + 'px';
@@ -1110,4 +1111,3 @@ $(document).ready(function() {
 	publicMethod.settings = defaults;
 
 }(jQuery, document, window));
-
