@@ -44,11 +44,13 @@ $default_fd['gallery3']['gallery3id'] = array(
     );
 
 // Category Field
+$defaultcat = Jojo::selectRow("SELECT gallerycategoryid FROM {gallerycategory} ORDER BY gallerycategoryid");
+$defaultcat = isset($defaultcat['gallerycategoryid']) ? $defaultcat['gallerycategoryid'] : 1;
 $default_fd['gallery3']['category'] = array(
         'fd_name' => "Page",
         'fd_type' => "dblist",
         'fd_options' => "gallerycategory",
-        'fd_default' => "0",
+        'fd_default' => $defaultcat,
         'fd_size' => "20",
         'fd_help' => "The page on the site the Gallery belongs to",
         'fd_order' => $o++,
@@ -287,11 +289,14 @@ $default_fd['gallery3_image']['gallery3_imageid'] = array(
         'fd_tabname' => "Content",
     );
 
+$defaultcat = Jojo::selectRow("SELECT gallery3id FROM {gallery3} ORDER BY gallery3id");
+$defaultcat = isset($defaultcat['gallery3id']) ? $defaultcat['gallery3id'] : 1000;
 // In Gallery Field
 $default_fd['gallery3_image']['gallery3id'] = array(
         'fd_name' => "In Gallery",
         'fd_type' => "dblist_g3",
         'fd_options' => "gallery3",
+        'fd_default' => $defaultcat,
         'fd_required' => "yes",
         'fd_help' => "The gallery this image belongs in",
         'fd_order' => $o++,
