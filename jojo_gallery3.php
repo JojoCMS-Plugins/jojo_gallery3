@@ -432,7 +432,9 @@ class Jojo_Plugin_Jojo_gallery3 extends Jojo_Plugin
                     /* Image in the directory and in the database - return the record */
                     $fileloc = _DOWNLOADDIR . '/gallery3/' . $galleryid . '/' . $filename;
                     $files[$key] = array(
+                                    'imageid' => $dbrows[$filename]['gallery3_imageid'],
                                     'filename'      => $filename,
+                                    'name'      => $dbrows[$filename]['name'],
                                     'gallery3id'    => $galleryid,
                                     'caption'       => htmlspecialchars($dbrows[$filename]['caption'],ENT_COMPAT,'UTF-8',false),
                                     'date'           => Jojo::formatTimestamp($dbrows[$filename]['gi_date'], "medium"),
